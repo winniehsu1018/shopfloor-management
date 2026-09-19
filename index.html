@@ -7,10 +7,11 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    content="width=device-width, initial-scale=1.0"
   >
 
   <title>生產批次登錄</title>
+
 
   <!-- LINE LIFF SDK -->
   <script
@@ -24,248 +25,489 @@
       box-sizing: border-box;
     }
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100%;
-    }
 
     body {
+
+      margin: 0;
+
       font-family:
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
-        "Microsoft JhengHei",
-        Arial,
+        Roboto,
+        "Noto Sans TC",
         sans-serif;
 
-      background: #f4f6f8;
-      color: #333;
+      background: #f5f6f8;
 
-      padding:
-        18px
-        18px
-        calc(18px + env(safe-area-inset-bottom));
+      color: #222;
     }
+
 
     .container {
-      width: 100%;
-      max-width: 520px;
+
+      max-width: 680px;
+
       margin: 0 auto;
+
+      padding: 16px;
     }
 
-    .page-title {
-      text-align: center;
-      font-size: 25px;
-      font-weight: 700;
-      margin: 8px 0 6px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #777;
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
 
     .card {
-      background: white;
+
+      background: #ffffff;
+
       border-radius: 16px;
-      padding: 22px;
+
+      padding: 20px;
+
       box-shadow:
-        0 4px 18px
-        rgba(0,0,0,0.08);
+        0 2px 12px
+        rgba(0, 0, 0, 0.06);
     }
 
-    .field {
+
+    h1 {
+
+      margin:
+        0 0 6px 0;
+
+      font-size: 24px;
+    }
+
+
+    .subtitle {
+
+      color: #777;
+
+      font-size: 14px;
+
       margin-bottom: 18px;
     }
 
-    label {
-      display: block;
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 7px;
+
+    /* --------------------------------
+       使用者
+    -------------------------------- */
+
+    .user-box {
+
+      background: #f7f8fa;
+
+      border-radius: 10px;
+
+      padding: 12px;
+
+      margin-bottom: 18px;
+
+      font-size: 14px;
     }
 
+
+    .user-name {
+
+      font-weight: 700;
+
+      margin-left: 5px;
+    }
+
+
+    /* --------------------------------
+       表單
+    -------------------------------- */
+
+    .form-group {
+
+      margin-bottom: 16px;
+    }
+
+
+    label {
+
+      display: block;
+
+      font-weight: 600;
+
+      margin-bottom: 7px;
+
+      font-size: 15px;
+    }
+
+
     .required {
+
       color: #e53935;
     }
 
+
     input,
-    select,
     textarea {
+
       width: 100%;
-      border: 1px solid #d5dae0;
+
+      padding: 12px;
+
+      border:
+        1px solid #d7dbe0;
+
       border-radius: 10px;
-      background: white;
-      padding: 13px 14px;
+
       font-size: 16px;
-      color: #222;
-      outline: none;
+
+      background: #fff;
     }
+
 
     input:focus,
-    select:focus,
     textarea:focus {
-      border-color: #4285f4;
-      box-shadow:
-        0 0 0 3px
-        rgba(66,133,244,0.12);
+
+      outline: none;
+
+      border-color: #777;
     }
 
+
     input[readonly] {
-      background: #f3f5f7;
+
+      background: #f3f4f6;
+
       color: #555;
     }
 
+
     textarea {
-      min-height: 80px;
+
       resize: vertical;
+
+      min-height: 85px;
     }
 
-    .hint {
-      font-size: 13px;
-      color: #888;
-      margin-top: 6px;
-      line-height: 1.5;
-    }
 
-    .user-box {
-      display: none;
-      background: #eef5ff;
-      border-radius: 10px;
-      padding: 11px 13px;
-      margin-bottom: 18px;
-      font-size: 14px;
-      color: #315b87;
-    }
+    /* --------------------------------
+       料件來源
+    -------------------------------- */
 
-    .source-options {
-      display: grid;
-      grid-template-columns:
-        1fr 1fr;
+    .radio-group {
+
+      display: flex;
+
       gap: 10px;
     }
 
-    .source-option {
-      position: relative;
-    }
 
-    .source-option input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
+    .radio-option {
 
-    .source-option label {
-      display: block;
-      margin: 0;
-      padding: 13px 8px;
-      text-align: center;
-      border: 1px solid #d5dae0;
+      flex: 1;
+
+      border:
+        1px solid #d7dbe0;
+
       border-radius: 10px;
+
+      padding: 12px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 7px;
+
       cursor: pointer;
-      font-weight: 600;
-      background: white;
+
+      background: #fff;
     }
 
-    .source-option input:checked + label {
-      border-color: #1976d2;
-      background: #eaf3ff;
-      color: #1565c0;
+
+    .radio-option input {
+
+      width: auto;
+
+      margin: 0;
     }
 
-    .submit-button {
+
+    /* --------------------------------
+       送出
+    -------------------------------- */
+
+    .submit-btn {
+
       width: 100%;
+
       border: none;
+
       border-radius: 12px;
-      padding: 15px;
-      margin-top: 4px;
-      background: #1976d2;
-      color: white;
-      font-size: 18px;
+
+      padding: 14px;
+
+      font-size: 17px;
+
       font-weight: 700;
+
+      background: #1f9d55;
+
+      color: white;
+
       cursor: pointer;
+
+      margin-top: 4px;
     }
 
-    .submit-button:disabled {
-      background: #aeb7c1;
+
+    .submit-btn:disabled {
+
+      background: #aab2b9;
+
       cursor: not-allowed;
     }
 
-    #loadingOverlay {
-      position: fixed;
-      inset: 0;
-      background: #f4f6f8;
-      z-index: 9999;
+
+    /* --------------------------------
+       訊息
+    -------------------------------- */
+
+    .message {
+
+      display: none;
+
+      border-radius: 10px;
+
+      padding: 12px;
+
+      margin-bottom: 16px;
+
+      font-size: 14px;
+
+      line-height: 1.6;
+    }
+
+
+    .message.success {
+
+      display: block;
+
+      background: #eaf8ef;
+
+      color: #176b35;
+    }
+
+
+    .message.error {
+
+      display: block;
+
+      background: #fff0f0;
+
+      color: #c62828;
+    }
+
+
+    /* --------------------------------
+       今日批次
+    -------------------------------- */
+
+    .today-section {
+
+      margin-top: 26px;
+
+      padding-top: 20px;
+
+      border-top:
+        1px solid #e5e7eb;
+    }
+
+
+    .today-header {
 
       display: flex;
+
+      justify-content:
+        space-between;
+
       align-items: center;
-      justify-content: center;
 
-      padding: 25px;
+      margin-bottom: 12px;
     }
 
-    .loading-card {
-      text-align: center;
-      background: white;
-      border-radius: 16px;
-      padding: 28px;
-      width: min(330px, 90vw);
-      box-shadow:
-        0 4px 18px
-        rgba(0,0,0,0.08);
+
+    .today-header h2 {
+
+      margin: 0;
+
+      font-size: 18px;
     }
 
-    .spinner {
-      width: 34px;
-      height: 34px;
-      border: 4px solid #e0e0e0;
-      border-top-color: #1976d2;
-      border-radius: 50%;
-      margin: 0 auto 15px;
-      animation:
-        spin 0.8s linear infinite;
+
+    .refresh-btn {
+
+      border: none;
+
+      background: #f0f2f5;
+
+      padding: 8px 12px;
+
+      border-radius: 8px;
+
+      font-size: 14px;
+
+      cursor: pointer;
     }
 
-    @keyframes spin {
-      to {
-        transform:
-          rotate(360deg);
-      }
-    }
 
-    #errorBox {
-      display: none;
-      margin-top: 18px;
+    .batch-card {
+
+      background: #fff;
+
+      border:
+        1px solid #e4e7eb;
+
+      border-radius: 12px;
+
       padding: 14px;
-      border-radius: 10px;
-      background: #ffebee;
-      color: #b71c1c;
+
+      margin-bottom: 10px;
+    }
+
+
+    .batch-card-top {
+
+      display: flex;
+
+      justify-content:
+        space-between;
+
+      align-items: center;
+    }
+
+
+    .batch-id {
+
+      font-size: 16px;
+
+      font-weight: 700;
+    }
+
+
+    .batch-status {
+
+      background: #f0f2f5;
+
+      border-radius: 20px;
+
+      padding: 4px 9px;
+
+      font-size: 12px;
+    }
+
+
+    .batch-part {
+
+      font-size: 16px;
+
+      font-weight: 600;
+
+      margin-top: 9px;
+    }
+
+
+    .batch-detail {
+
+      font-size: 14px;
+
+      color: #666;
+
+      margin-top: 5px;
+
       line-height: 1.5;
     }
 
-    #successBox {
+
+    .empty-message {
+
+      text-align: center;
+
+      color: #888;
+
+      padding: 20px 10px;
+    }
+
+
+    /* --------------------------------
+       Loading / Unauthorized
+    -------------------------------- */
+
+    .full-screen {
+
+      position: fixed;
+
+      inset: 0;
+
+      background: #f5f6f8;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      padding: 20px;
+
+      z-index: 9999;
+    }
+
+
+    .status-card {
+
+      width: 100%;
+
+      max-width: 370px;
+
+      background: white;
+
+      border-radius: 18px;
+
+      padding: 28px 22px;
+
+      text-align: center;
+
+      box-shadow:
+        0 4px 18px
+        rgba(0, 0, 0, 0.07);
+    }
+
+
+    .status-icon {
+
+      font-size: 38px;
+
+      margin-bottom: 10px;
+    }
+
+
+    .status-title {
+
+      font-size: 20px;
+
+      font-weight: 700;
+
+      margin-bottom: 8px;
+    }
+
+
+    .status-text {
+
+      color: #777;
+
+      line-height: 1.6;
+    }
+
+
+    #mainApp {
+
       display: none;
-      margin-top: 18px;
-      padding: 17px;
-      border-radius: 12px;
-      background: #e8f5e9;
-      color: #1b5e20;
-      line-height: 1.7;
-    }
-
-    .batch-id {
-      font-size: 26px;
-      font-weight: 800;
-      color: #1565c0;
-      margin: 4px 0 8px;
-    }
-
-    .hidden {
-      display: none !important;
     }
 
   </style>
@@ -276,33 +518,30 @@
 <body>
 
 
-<!-- =========================================================
-     初始化遮罩
-     ========================================================= -->
+<!-- ======================================================
+     初始化畫面
+====================================================== -->
 
-<div id="loadingOverlay">
+<div
+  id="loadingScreen"
+  class="full-screen"
+>
 
-  <div class="loading-card">
+  <div class="status-card">
 
-    <div class="spinner"></div>
+    <div class="status-icon">
+      ⏳
+    </div>
 
-    <div
-      id="loadingText"
-      style="
-        font-weight:600;
-        margin-bottom:5px;
-      "
-    >
-      身分驗證中...
+    <div class="status-title">
+      系統載入中
     </div>
 
     <div
-      style="
-        color:#888;
-        font-size:13px;
-      "
+      id="loadingText"
+      class="status-text"
     >
-      請稍候
+      正在確認您的 LINE 身分...
     </div>
 
   </div>
@@ -310,209 +549,317 @@
 </div>
 
 
-<!-- =========================================================
+<!-- ======================================================
+     無權限
+====================================================== -->
+
+<div
+  id="unauthorizedScreen"
+  class="full-screen"
+  style="display:none;"
+>
+
+  <div class="status-card">
+
+    <div class="status-icon">
+      ⚠️
+    </div>
+
+    <div class="status-title">
+      無法進入系統
+    </div>
+
+    <div
+      id="unauthorizedMessage"
+      class="status-text"
+    >
+      您沒有使用此系統的權限
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ======================================================
      主畫面
-     ========================================================= -->
+====================================================== -->
 
-<div class="container">
-
-  <div class="page-title">
-    📦 生產批次登錄
-  </div>
-
-  <div class="subtitle">
-    客供料 / 自購料
-  </div>
-
+<div
+  id="mainApp"
+  class="container"
+>
 
   <div class="card">
 
+    <h1>
+      📦 生產批次登錄
+    </h1>
+
+    <div class="subtitle">
+      客供料 / 自購料生產批次管理
+    </div>
+
+
+    <!-- 使用者 -->
+
+    <div class="user-box">
+
+      登錄人員：
+
+      <span
+        id="employeeName"
+        class="user-name"
+      >
+        -
+      </span>
+
+    </div>
+
+
+    <!-- 訊息 -->
+
     <div
-      id="userBox"
-      class="user-box"
+      id="messageBox"
+      class="message"
+    ></div>
+
+
+    <!-- ==================================================
+         表單
+    =================================================== -->
+
+    <form
+      id="batchForm"
+      autocomplete="off"
     >
-      👤 登錄人員：
-      <strong id="employeeName"></strong>
-    </div>
 
 
-    <!-- 料件來源 -->
+      <!-- 料件來源 -->
 
-    <div class="field">
+      <div class="form-group">
 
-      <label>
-        料件來源
-        <span class="required">*</span>
-      </label>
+        <label>
+          料件來源
+          <span class="required">*</span>
+        </label>
 
-      <div class="source-options">
 
-        <div class="source-option">
+        <div class="radio-group">
 
-          <input
-            type="radio"
-            id="sourceCustomer"
-            name="materialSource"
-            value="客供料"
-            checked
-          >
 
-          <label for="sourceCustomer">
+          <label class="radio-option">
+
+            <input
+              type="radio"
+              name="materialSource"
+              value="客供料"
+              checked
+            >
+
             客供料
+
           </label>
 
-        </div>
 
+          <label class="radio-option">
 
-        <div class="source-option">
+            <input
+              type="radio"
+              name="materialSource"
+              value="自購料"
+            >
 
-          <input
-            type="radio"
-            id="sourcePurchase"
-            name="materialSource"
-            value="自購料"
-          >
-
-          <label for="sourcePurchase">
             自購料
+
           </label>
+
 
         </div>
 
       </div>
 
-    </div>
+
+      <!-- 來料日期 -->
+
+      <div class="form-group">
+
+        <label for="arrivalDate">
+
+          來料日期
+          <span class="required">*</span>
+
+        </label>
 
 
-    <!-- 來料日期 -->
+        <input
+          type="date"
+          id="arrivalDate"
+          required
+        >
 
-    <div class="field">
-
-      <label for="arrivalDate">
-        來料日期
-        <span class="required">*</span>
-      </label>
-
-      <input
-        type="date"
-        id="arrivalDate"
-      >
-
-    </div>
-
-
-    <!-- 件號搜尋 -->
-
-    <div class="field">
-
-      <label for="partSearch">
-        件號
-        <span class="required">*</span>
-      </label>
-
-      <input
-        type="text"
-        id="partSearch"
-        list="partList"
-        placeholder="輸入或搜尋件號"
-        autocomplete="off"
-      >
-
-      <datalist id="partList"></datalist>
-
-      <div class="hint">
-        車1、車2會自動合併為同一個生產批次件號。
       </div>
 
-    </div>
+
+      <!-- 件號 -->
+
+      <div class="form-group">
+
+        <label for="partSearch">
+
+          件號
+          <span class="required">*</span>
+
+        </label>
 
 
-    <!-- 客戶 -->
+        <input
+          type="text"
+          id="partSearch"
+          list="partList"
+          placeholder="輸入或選擇件號"
+          required
+        >
 
-    <div class="field">
 
-      <label for="customer">
-        客戶
-      </label>
+        <datalist
+          id="partList"
+        ></datalist>
 
-      <input
-        type="text"
-        id="customer"
-        readonly
-        placeholder="選擇件號後自動帶入"
+      </div>
+
+
+      <!-- 客戶 -->
+
+      <div class="form-group">
+
+        <label for="customer">
+          客戶
+        </label>
+
+
+        <input
+          type="text"
+          id="customer"
+          readonly
+        >
+
+      </div>
+
+
+      <!-- 重量 -->
+
+      <div class="form-group">
+
+        <label for="weight">
+
+          來料重量 kg
+          <span class="required">*</span>
+
+        </label>
+
+
+        <input
+          type="number"
+          id="weight"
+          step="0.001"
+          min="0.001"
+          inputmode="decimal"
+          placeholder="例如：60"
+          required
+        >
+
+      </div>
+
+
+      <!-- 預計交回 -->
+
+      <div class="form-group">
+
+        <label for="returnDate">
+
+          預計交回日
+          <span class="required">*</span>
+
+        </label>
+
+
+        <input
+          type="date"
+          id="returnDate"
+          required
+        >
+
+      </div>
+
+
+      <!-- 備註 -->
+
+      <div class="form-group">
+
+        <label for="remark">
+          備註
+        </label>
+
+
+        <textarea
+          id="remark"
+          placeholder="沒有可留白"
+        ></textarea>
+
+      </div>
+
+
+      <!-- Submit -->
+
+      <button
+        id="submitBtn"
+        class="submit-btn"
+        type="submit"
       >
-
-    </div>
-
-
-    <!-- 重量 -->
-
-    <div class="field">
-
-      <label for="weight">
-        來料重量 kg
-        <span class="required">*</span>
-      </label>
-
-      <input
-        type="number"
-        id="weight"
-        inputmode="decimal"
-        step="0.001"
-        min="0"
-        placeholder="例如：65.2"
-      >
-
-    </div>
+        建立生產批次
+      </button>
 
 
-    <!-- 預計交回 -->
-
-    <div class="field">
-
-      <label for="returnDate">
-        預計交回日
-        <span class="required">*</span>
-      </label>
-
-      <input
-        type="date"
-        id="returnDate"
-      >
-
-    </div>
+    </form>
 
 
-    <!-- 備註 -->
+    <!-- ==================================================
+         今日批次
+    =================================================== -->
 
-    <div class="field">
-
-      <label for="remark">
-        備註
-      </label>
-
-      <textarea
-        id="remark"
-        maxlength="500"
-        placeholder="選填，例如：急件、客戶要求優先加工..."
-      ></textarea>
-
-    </div>
+    <section class="today-section">
 
 
-    <button
-      type="button"
-      id="submitBtn"
-      class="submit-button"
-      onclick="submitBatch()"
-    >
-      建立生產批次
-    </button>
+      <div class="today-header">
+
+        <h2>
+          今日已建立批次
+        </h2>
 
 
-    <div id="errorBox"></div>
+        <button
+          type="button"
+          class="refresh-btn"
+          onclick="loadTodayBatches()"
+        >
+          重新整理
+        </button>
 
-    <div id="successBox"></div>
+      </div>
+
+
+      <div id="todayBatchList">
+
+        <div class="empty-message">
+          載入中...
+        </div>
+
+      </div>
+
+
+    </section>
+
 
   </div>
 
@@ -522,55 +869,61 @@
 <script>
 
 // ============================================================
-// ★★★ 這裡換成你的資料 ★★★
+// 設定
 // ============================================================
 
 const LIFF_ID =
   '2011673429-ROxFgkBr';
 
 
+// ★★★ 請把這裡改成你的 GAS /exec 網址 ★★★
+
 const GAS_WEB_APP_URL =
   'https://script.google.com/macros/s/AKfycbyCdjMiE1RrNlAue5OzMGQCa9vhgd0cmwdjRE-G96377aA0IXFkCclh_GUoOe4qN8GFeg/exec';
 
 
+
 // ============================================================
-// Global
+// 全域變數
 // ============================================================
 
 let currentUserId = '';
 
 let currentEmployeeName = '';
 
-let partOptions = [];
-
 let partMap = {};
+
+let currentRequestId = null;
 
 let isSubmitting = false;
 
 
+
 // ============================================================
-// 初始化
+// 啟動
 // ============================================================
 
-window.addEventListener(
+document.addEventListener(
   'DOMContentLoaded',
   initializeApp
 );
+
 
 
 async function initializeApp() {
 
   try {
 
-    setToday();
-
     setLoadingText(
-      '正在連接 LINE...'
+      '正在初始化 LINE...'
     );
 
 
+    setToday();
+
+
     // --------------------------------------------------------
-    // LIFF init
+    // LIFF
     // --------------------------------------------------------
 
     await liff.init({
@@ -582,9 +935,7 @@ async function initializeApp() {
     // 未登入
     // --------------------------------------------------------
 
-    if (
-      !liff.isLoggedIn()
-    ) {
+    if (!liff.isLoggedIn()) {
 
       liff.login({
         redirectUri:
@@ -592,16 +943,15 @@ async function initializeApp() {
       });
 
       return;
-
     }
 
 
     // --------------------------------------------------------
-    // Profile
+    // LINE Profile
     // --------------------------------------------------------
 
     setLoadingText(
-      '正在取得身分...'
+      '正在取得 LINE 身分...'
     );
 
 
@@ -618,7 +968,6 @@ async function initializeApp() {
       throw new Error(
         '無法取得 LINE User ID'
       );
-
     }
 
 
@@ -627,7 +976,7 @@ async function initializeApp() {
     // --------------------------------------------------------
 
     setLoadingText(
-      '正在驗證權限...'
+      '正在確認系統權限...'
     );
 
 
@@ -646,26 +995,26 @@ async function initializeApp() {
       !auth.authorized
     ) {
 
-      throw new Error(
+      showUnauthorized(
         '您沒有使用此系統的權限'
       );
 
+      return;
     }
 
 
-    if (
-      !auth.canWrite
-    ) {
+    if (!auth.canWrite) {
 
-      throw new Error(
+      showUnauthorized(
         '您的帳號只有讀取權限，無法建立生產批次'
       );
 
+      return;
     }
 
 
     currentEmployeeName =
-      auth.employeeName || '';
+      auth.employeeName || '未知';
 
 
     document
@@ -676,685 +1025,117 @@ async function initializeApp() {
         currentEmployeeName;
 
 
+    // --------------------------------------------------------
+    // 件號
+    // --------------------------------------------------------
+
+    setLoadingText(
+      '正在載入件號資料...'
+    );
+
+
+    await loadParts();
+
+
+    // --------------------------------------------------------
+    // 顯示主畫面
+    // --------------------------------------------------------
+
     document
       .getElementById(
-        'userBox'
+        'loadingScreen'
+      )
+      .style.display =
+        'none';
+
+
+    document
+      .getElementById(
+        'mainApp'
       )
       .style.display =
         'block';
 
 
     // --------------------------------------------------------
-    // 件號
+    // 今日批次
     // --------------------------------------------------------
 
-    setLoadingText(
-      '正在載入件號...'
-    );
-
-
-    const result =
-      await apiGet(
-        'getParts',
-        {
-          userId:
-            currentUserId
-        }
-      );
-
-
-    if (
-      !result.success
-    ) {
-
-      throw new Error(
-        result.message ||
-        '件號載入失敗'
-      );
-
-    }
-
-
-    partOptions =
-      Array.isArray(
-        result.parts
-      )
-        ? result.parts
-        : [];
-
-
-    buildPartMap();
-
-    renderPartList();
-
-
-    // --------------------------------------------------------
-    // 完成
-    // --------------------------------------------------------
-
-    hideLoading();
+    await loadTodayBatches();
 
 
   } catch (error) {
 
-    showFatalError(
+    console.error(error);
+
+
+    showUnauthorized(
       error.message ||
       '系統初始化失敗'
     );
-
   }
-
 }
 
 
+
 // ============================================================
-// API GET
+// Loading
 // ============================================================
 
-async function apiGet(
-  action,
-  params = {}
-) {
+function setLoadingText(text) {
 
-  const url =
-    new URL(
-      GAS_WEB_APP_URL
-    );
-
-
-  url.searchParams.set(
-    'action',
-    action
-  );
-
-
-  Object
-    .entries(params)
-    .forEach(
-      ([key, value]) => {
-
-        url.searchParams.set(
-          key,
-          value
-        );
-
-      }
-    );
-
-
-  // 避免瀏覽器快取權限結果
-  url.searchParams.set(
-    '_t',
-    Date.now()
-  );
-
-
-  const response =
-    await fetch(
-      url.toString(),
-      {
-        method: 'GET',
-        redirect: 'follow',
-        cache: 'no-store'
-      }
-    );
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      '伺服器回應錯誤：' +
-      response.status
-    );
-
-  }
-
-
-  return await response.json();
-
+  document
+    .getElementById(
+      'loadingText'
+    )
+    .textContent =
+      text;
 }
 
 
-// ============================================================
-// API POST
-// ============================================================
-
-async function apiPost(
-  data
-) {
-
-  // ----------------------------------------------------------
-  // 注意：
-  //
-  // 不指定 application/json
-  // 避免 GitHub → GAS 產生不必要的 CORS preflight
-  //
-  // GAS 仍可使用 JSON.parse(e.postData.contents)
-  // ----------------------------------------------------------
-
-  const response =
-    await fetch(
-      GAS_WEB_APP_URL,
-      {
-        method: 'POST',
-
-        redirect: 'follow',
-
-        body:
-          JSON.stringify(
-            data
-          )
-      }
-    );
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      '伺服器回應錯誤：' +
-      response.status
-    );
-
-  }
-
-
-  return await response.json();
-
-}
-
 
 // ============================================================
-// 建立件號 Map
+// 無權限 / 錯誤
 // ============================================================
 
-function buildPartMap() {
+function showUnauthorized(message) {
 
-  partMap = {};
-
-
-  partOptions.forEach(
-    item => {
-
-      if (
-        !item ||
-        !item.partNo
-      ) {
-
-        return;
-
-      }
-
-
-      partMap[
-        item.partNo
-      ] = item;
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// datalist
-// ============================================================
-
-function renderPartList() {
-
-  const list =
-    document.getElementById(
-      'partList'
-    );
-
-
-  list.innerHTML = '';
-
-
-  partOptions.forEach(
-    item => {
-
-      const option =
-        document.createElement(
-          'option'
-        );
-
-
-      option.value =
-        item.partNo;
-
-
-      option.label =
-        item.customer
-          ? item.customer
-          : '';
-
-
-      list.appendChild(
-        option
-      );
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// 選件號 → 客戶
-// ============================================================
-
-document
-  .getElementById(
-    'partSearch'
-  )
-  .addEventListener(
-    'input',
-    updateCustomer
-  );
-
-
-document
-  .getElementById(
-    'partSearch'
-  )
-  .addEventListener(
-    'change',
-    updateCustomer
-  );
-
-
-function updateCustomer() {
-
-  const partNo =
-    document
-      .getElementById(
-        'partSearch'
-      )
-      .value
-      .trim();
-
-
-  const item =
-    partMap[
-      partNo
-    ];
+  document
+    .getElementById(
+      'loadingScreen'
+    )
+    .style.display =
+      'none';
 
 
   document
     .getElementById(
-      'customer'
+      'mainApp'
     )
-    .value =
-      item
-        ? item.customer
-        : '';
+    .style.display =
+      'none';
 
+
+  document
+    .getElementById(
+      'unauthorizedScreen'
+    )
+    .style.display =
+      'flex';
+
+
+  document
+    .getElementById(
+      'unauthorizedMessage'
+    )
+    .textContent =
+      message;
 }
 
 
-// ============================================================
-// 建立批次
-// ============================================================
-
-async function submitBatch() {
-
-  if (
-    isSubmitting
-  ) {
-
-    return;
-
-  }
-
-
-  hideMessages();
-
-
-  const materialSourceElement =
-    document.querySelector(
-      'input[name="materialSource"]:checked'
-    );
-
-
-  const data = {
-
-    action:
-      'createBatch',
-
-    userId:
-      currentUserId,
-
-    materialSource:
-      materialSourceElement
-        ? materialSourceElement.value
-        : '',
-
-    arrivalDate:
-      document
-        .getElementById(
-          'arrivalDate'
-        )
-        .value,
-
-    partNo:
-      document
-        .getElementById(
-          'partSearch'
-        )
-        .value
-        .trim(),
-
-    weight:
-      document
-        .getElementById(
-          'weight'
-        )
-        .value,
-
-    returnDate:
-      document
-        .getElementById(
-          'returnDate'
-        )
-        .value,
-
-    remark:
-      document
-        .getElementById(
-          'remark'
-        )
-        .value
-        .trim()
-
-  };
-
-
-  // ----------------------------------------------------------
-  // 前端驗證
-  // ----------------------------------------------------------
-
-  if (!data.userId) {
-
-    showError(
-      '無法取得 LINE 身分'
-    );
-
-    return;
-
-  }
-
-
-  if (!data.partNo) {
-
-    showError(
-      '請選擇件號'
-    );
-
-    return;
-
-  }
-
-
-  if (
-    !partMap[
-      data.partNo
-    ]
-  ) {
-
-    showError(
-      '請從件號清單選擇有效件號'
-    );
-
-    return;
-
-  }
-
-
-  if (!data.arrivalDate) {
-
-    showError(
-      '請選擇來料日期'
-    );
-
-    return;
-
-  }
-
-
-  if (
-    !data.weight ||
-    Number(data.weight) <= 0
-  ) {
-
-    showError(
-      '請輸入正確的來料重量'
-    );
-
-    return;
-
-  }
-
-
-  if (!data.returnDate) {
-
-    showError(
-      '請選擇預計交回日'
-    );
-
-    return;
-
-  }
-
-
-  if (
-    data.returnDate <
-    data.arrivalDate
-  ) {
-
-    showError(
-      '預計交回日不能早於來料日期'
-    );
-
-    return;
-
-  }
-
-
-  if (!data.materialSource) {
-
-    showError(
-      '請選擇料件來源'
-    );
-
-    return;
-
-  }
-
-
-  // ----------------------------------------------------------
-  // 送出
-  // ----------------------------------------------------------
-
-  try {
-
-    setSubmitting(
-      true
-    );
-
-
-    const result =
-      await apiPost(
-        data
-      );
-
-
-    if (
-      !result.success
-    ) {
-
-      throw new Error(
-        result.message ||
-        '建立生產批次失敗'
-      );
-
-    }
-
-
-    showSuccess(
-      result
-    );
-
-
-    clearAfterSuccess();
-
-
-  } catch (error) {
-
-    showError(
-      error.message ||
-      '建立失敗'
-    );
-
-
-  } finally {
-
-    setSubmitting(
-      false
-    );
-
-  }
-
-}
-
 
 // ============================================================
-// 成功
-// ============================================================
-
-function showSuccess(
-  data
-) {
-
-  const box =
-    document.getElementById(
-      'successBox'
-    );
-
-
-  box.innerHTML =
-
-    '<strong>✅ 生產批次建立成功</strong>' +
-
-    '<div class="batch-id">' +
-      escapeHtml(
-        data.batchId
-      ) +
-    '</div>' +
-
-    '<div>件號：' +
-      escapeHtml(
-        data.partNo
-      ) +
-    '</div>' +
-
-    '<div>客戶：' +
-      escapeHtml(
-        data.customer
-      ) +
-    '</div>' +
-
-    '<div>料件來源：' +
-      escapeHtml(
-        data.materialSource
-      ) +
-    '</div>' +
-
-    '<div>來料重量：' +
-      escapeHtml(
-        data.weight
-      ) +
-      ' kg</div>' +
-
-    '<div>預計交回：' +
-      escapeHtml(
-        data.returnDate
-      ) +
-    '</div>' +
-
-    '<div>登錄人員：' +
-      escapeHtml(
-        data.employeeName
-      ) +
-    '</div>';
-
-
-  box.style.display =
-    'block';
-
-
-  box.scrollIntoView({
-    behavior: 'smooth',
-    block: 'nearest'
-  });
-
-}
-
-
-// ============================================================
-// 成功後清空
-// ============================================================
-
-function clearAfterSuccess() {
-
-  // 保留：
-  // 登錄人員
-  // 來料日期
-  // 料件來源
-
-  document
-    .getElementById(
-      'partSearch'
-    )
-    .value =
-      '';
-
-
-  document
-    .getElementById(
-      'customer'
-    )
-    .value =
-      '';
-
-
-  document
-    .getElementById(
-      'weight'
-    )
-    .value =
-      '';
-
-
-  document
-    .getElementById(
-      'returnDate'
-    )
-    .value =
-      '';
-
-
-  document
-    .getElementById(
-      'remark'
-    )
-    .value =
-      '';
-
-}
-
-
-// ============================================================
-// 今天
+// 今天日期
 // ============================================================
 
 function setToday() {
@@ -1391,20 +1172,332 @@ function setToday() {
     )
     .value =
       `${year}-${month}-${day}`;
-
 }
 
 
+
 // ============================================================
-// UI
+// 件號
 // ============================================================
 
-function setSubmitting(
-  state
-) {
+async function loadParts() {
 
-  isSubmitting =
-    state;
+  const data =
+    await apiGet(
+      'getParts',
+      {
+        userId:
+          currentUserId
+      }
+    );
+
+
+  if (!data.success) {
+
+    throw new Error(
+      data.message ||
+      '件號載入失敗'
+    );
+  }
+
+
+  partMap = {};
+
+
+  const list =
+    document.getElementById(
+      'partList'
+    );
+
+
+  list.innerHTML = '';
+
+
+  (data.parts || [])
+    .forEach(function(item) {
+
+
+      partMap[
+        item.partNo
+      ] = item;
+
+
+      const option =
+        document.createElement(
+          'option'
+        );
+
+
+      option.value =
+        item.partNo;
+
+
+      if (item.customer) {
+
+        option.label =
+          item.customer;
+      }
+
+
+      list.appendChild(
+        option
+      );
+
+    });
+}
+
+
+
+// ============================================================
+// 件號 → 客戶
+// ============================================================
+
+document
+  .getElementById(
+    'partSearch'
+  )
+  .addEventListener(
+    'input',
+    function() {
+
+      const partNo =
+        this.value.trim();
+
+
+      const customer =
+        document.getElementById(
+          'customer'
+        );
+
+
+      if (
+        partMap[partNo]
+      ) {
+
+        customer.value =
+          partMap[
+            partNo
+          ].customer || '';
+
+      } else {
+
+        customer.value = '';
+      }
+
+    }
+  );
+
+
+
+// ============================================================
+// Form submit
+// ============================================================
+
+document
+  .getElementById(
+    'batchForm'
+  )
+  .addEventListener(
+    'submit',
+    submitBatch
+  );
+
+
+
+async function submitBatch(event) {
+
+  event.preventDefault();
+
+
+  // 防止使用者連點
+  if (isSubmitting) {
+
+    return;
+  }
+
+
+  clearMessage();
+
+
+  const arrivalDate =
+    document
+      .getElementById(
+        'arrivalDate'
+      )
+      .value;
+
+
+  const partNo =
+    document
+      .getElementById(
+        'partSearch'
+      )
+      .value
+      .trim();
+
+
+  const weight =
+    Number(
+      document
+        .getElementById(
+          'weight'
+        )
+        .value
+    );
+
+
+  const returnDate =
+    document
+      .getElementById(
+        'returnDate'
+      )
+      .value;
+
+
+  const remark =
+    document
+      .getElementById(
+        'remark'
+      )
+      .value
+      .trim();
+
+
+  const sourceElement =
+    document.querySelector(
+      'input[name="materialSource"]:checked'
+    );
+
+
+  const materialSource =
+    sourceElement
+      ? sourceElement.value
+      : '';
+
+
+  // --------------------------------------------------------
+  // 驗證
+  // --------------------------------------------------------
+
+  if (!arrivalDate) {
+
+    showMessage(
+      '請選擇來料日期',
+      'error'
+    );
+
+    return;
+  }
+
+
+  if (
+    !partNo ||
+    !partMap[partNo]
+  ) {
+
+    showMessage(
+      '請從件號清單中選擇正確的件號',
+      'error'
+    );
+
+    return;
+  }
+
+
+  if (
+    !Number.isFinite(weight) ||
+    weight <= 0
+  ) {
+
+    showMessage(
+      '請輸入正確的來料重量',
+      'error'
+    );
+
+    return;
+  }
+
+
+  if (!returnDate) {
+
+    showMessage(
+      '請選擇預計交回日',
+      'error'
+    );
+
+    return;
+  }
+
+
+  if (
+    returnDate <
+    arrivalDate
+  ) {
+
+    showMessage(
+      '預計交回日不可早於來料日期',
+      'error'
+    );
+
+    return;
+  }
+
+
+  if (!materialSource) {
+
+    showMessage(
+      '請選擇料件來源',
+      'error'
+    );
+
+    return;
+  }
+
+
+  // --------------------------------------------------------
+  // requestId
+  //
+  // 只有第一次送出時建立。
+  // 如果網路失敗，保留同一個 requestId。
+  // --------------------------------------------------------
+
+  if (!currentRequestId) {
+
+    currentRequestId =
+      generateRequestId();
+  }
+
+
+  const payload = {
+
+    action:
+      'createBatch',
+
+    userId:
+      currentUserId,
+
+    arrivalDate:
+      arrivalDate,
+
+    partNo:
+      partNo,
+
+    weight:
+      weight,
+
+    returnDate:
+      returnDate,
+
+    materialSource:
+      materialSource,
+
+    remark:
+      remark,
+
+    requestId:
+      currentRequestId
+
+  };
 
 
   const button =
@@ -1413,141 +1506,473 @@ function setSubmitting(
     );
 
 
-  button.disabled =
-    state;
+  try {
+
+    isSubmitting = true;
+
+    button.disabled = true;
+
+    button.textContent =
+      '建立中...';
 
 
-  button.textContent =
-    state
-      ? '建立中...'
-      : '建立生產批次';
+    const result =
+      await apiPost(
+        payload
+      );
 
+
+    if (!result.success) {
+
+      throw new Error(
+        result.message ||
+        '建立批次失敗'
+      );
+    }
+
+
+    // --------------------------------------------------------
+    // 成功
+    // --------------------------------------------------------
+
+    if (result.duplicate) {
+
+      showMessage(
+        `此筆資料已經建立過，批次 ID：${result.batchId}`,
+        'success'
+      );
+
+    } else {
+
+      showMessage(
+        `建立成功！批次 ID：${result.batchId}`,
+        'success'
+      );
+    }
+
+
+    // --------------------------------------------------------
+    // 成功後才清除 requestId
+    // --------------------------------------------------------
+
+    currentRequestId = null;
+
+
+    // --------------------------------------------------------
+    // 清空下一筆輸入
+    // --------------------------------------------------------
+
+    document
+      .getElementById(
+        'partSearch'
+      )
+      .value = '';
+
+
+    document
+      .getElementById(
+        'customer'
+      )
+      .value = '';
+
+
+    document
+      .getElementById(
+        'weight'
+      )
+      .value = '';
+
+
+    document
+      .getElementById(
+        'returnDate'
+      )
+      .value = '';
+
+
+    document
+      .getElementById(
+        'remark'
+      )
+      .value = '';
+
+
+    // --------------------------------------------------------
+    // 更新今日批次
+    // --------------------------------------------------------
+
+    await loadTodayBatches();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    // 注意：
+    // 這裡故意不清除 currentRequestId
+    //
+    // 如果 GAS 已經寫入但手機沒收到回應，
+    // 再送一次仍會使用相同 requestId，
+    // GAS 就能判斷為重複。
+
+    showMessage(
+      error.message ||
+      '送出失敗，請稍後再試',
+      'error'
+    );
+
+
+  } finally {
+
+    isSubmitting = false;
+
+    button.disabled = false;
+
+    button.textContent =
+      '建立生產批次';
+  }
 }
 
 
-function showError(
-  message
+
+// ============================================================
+// requestId
+// ============================================================
+
+function generateRequestId() {
+
+  if (
+    window.crypto &&
+    typeof crypto.randomUUID ===
+      'function'
+  ) {
+
+    return crypto.randomUUID();
+  }
+
+
+  return (
+    Date.now()
+      .toString(36)
+    +
+    '-'
+    +
+    Math.random()
+      .toString(36)
+      .substring(2, 12)
+  );
+}
+
+
+
+// ============================================================
+// 今日批次
+// ============================================================
+
+async function loadTodayBatches() {
+
+  const container =
+    document.getElementById(
+      'todayBatchList'
+    );
+
+
+  container.innerHTML =
+    '<div class="empty-message">載入中...</div>';
+
+
+  try {
+
+    const data =
+      await apiGet(
+        'getTodayBatches',
+        {
+          userId:
+            currentUserId
+        }
+      );
+
+
+    if (!data.success) {
+
+      throw new Error(
+        data.message ||
+        '讀取今日批次失敗'
+      );
+    }
+
+
+    renderTodayBatches(
+      data.batches || []
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    container.innerHTML =
+      '<div class="empty-message">無法讀取今日批次</div>';
+  }
+}
+
+
+
+// ============================================================
+// 顯示今日批次
+// ============================================================
+
+function renderTodayBatches(
+  batches
+) {
+
+  const container =
+    document.getElementById(
+      'todayBatchList'
+    );
+
+
+  if (!batches.length) {
+
+    container.innerHTML =
+      '<div class="empty-message">今天尚未建立批次</div>';
+
+    return;
+  }
+
+
+  container.innerHTML =
+    batches
+      .map(function(batch) {
+
+        const weightText =
+          batch.arrivalWeight !== '' &&
+          batch.arrivalWeight !== null
+            ? `${escapeHtml(batch.arrivalWeight)} kg`
+            : '-';
+
+
+        return `
+
+          <div class="batch-card">
+
+            <div class="batch-card-top">
+
+              <div class="batch-id">
+                ${escapeHtml(batch.batchId)}
+              </div>
+
+              <div class="batch-status">
+                ${escapeHtml(batch.status)}
+              </div>
+
+            </div>
+
+
+            <div class="batch-part">
+              ${escapeHtml(batch.partNo)}
+            </div>
+
+
+            <div class="batch-detail">
+
+              ${escapeHtml(batch.customer)}
+
+              ・
+
+              ${weightText}
+
+            </div>
+
+
+            <div class="batch-detail">
+
+              預計交回：
+
+              ${escapeHtml(
+                batch.returnDate || '-'
+              )}
+
+            </div>
+
+
+            <div class="batch-detail">
+
+              ${escapeHtml(
+                batch.materialSource
+              )}
+
+              ・登錄：
+
+              ${escapeHtml(
+                batch.createdBy
+              )}
+
+            </div>
+
+          </div>
+
+        `;
+
+      })
+      .join('');
+}
+
+
+
+// ============================================================
+// API GET
+// ============================================================
+
+async function apiGet(
+  action,
+  params = {}
+) {
+
+  const url =
+    new URL(
+      GAS_WEB_APP_URL
+    );
+
+
+  url.searchParams.set(
+    'action',
+    action
+  );
+
+
+  Object
+    .entries(params)
+    .forEach(
+      function(
+        [key, value]
+      ) {
+
+        url.searchParams.set(
+          key,
+          value
+        );
+
+      }
+    );
+
+
+  const response =
+    await fetch(
+      url.toString(),
+      {
+        method: 'GET',
+        cache: 'no-store'
+      }
+    );
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      `HTTP ${response.status}`
+    );
+  }
+
+
+  return await response.json();
+}
+
+
+
+// ============================================================
+// API POST
+//
+// 不設定 Content-Type: application/json
+// 避免瀏覽器先發送不必要的 CORS preflight。
+// GAS 仍可透過 e.postData.contents 解析 JSON。
+// ============================================================
+
+async function apiPost(data) {
+
+  const response =
+    await fetch(
+      GAS_WEB_APP_URL,
+      {
+
+        method: 'POST',
+
+        redirect: 'follow',
+
+        body:
+          JSON.stringify(data)
+
+      }
+    );
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      `HTTP ${response.status}`
+    );
+  }
+
+
+  return await response.json();
+}
+
+
+
+// ============================================================
+// Message
+// ============================================================
+
+function showMessage(
+  text,
+  type
 ) {
 
   const box =
     document.getElementById(
-      'errorBox'
+      'messageBox'
     );
 
 
   box.textContent =
-    '❌ ' +
-    message;
+    text;
 
 
-  box.style.display =
-    'block';
+  box.className =
+    'message ' + type;
 
 
   box.scrollIntoView({
     behavior: 'smooth',
     block: 'nearest'
   });
-
 }
 
 
-function hideMessages() {
 
-  document
-    .getElementById(
-      'errorBox'
-    )
-    .style.display =
-      'none';
+function clearMessage() {
 
-
-  document
-    .getElementById(
-      'successBox'
-    )
-    .style.display =
-      'none';
-
-}
-
-
-function setLoadingText(
-  text
-) {
-
-  document
-    .getElementById(
-      'loadingText'
-    )
-    .textContent =
-      text;
-
-}
-
-
-function hideLoading() {
-
-  document
-    .getElementById(
-      'loadingOverlay'
-    )
-    .style.display =
-      'none';
-
-}
-
-
-function showFatalError(
-  message
-) {
-
-  const overlay =
+  const box =
     document.getElementById(
-      'loadingOverlay'
+      'messageBox'
     );
 
 
-  overlay.innerHTML =
+  box.textContent = '';
 
-    '<div class="loading-card">' +
-
-      '<div style="' +
-        'font-size:40px;' +
-        'margin-bottom:12px;' +
-      '">' +
-        '⚠️' +
-      '</div>' +
-
-      '<div style="' +
-        'font-weight:700;' +
-        'font-size:18px;' +
-        'margin-bottom:8px;' +
-      '">' +
-        '無法進入系統' +
-      '</div>' +
-
-      '<div style="' +
-        'color:#b71c1c;' +
-        'line-height:1.6;' +
-      '">' +
-        escapeHtml(
-          message
-        ) +
-      '</div>' +
-
-    '</div>';
-
+  box.className =
+    'message';
 }
 
 
+
 // ============================================================
-// HTML Escape
+// HTML escape
 // ============================================================
 
-function escapeHtml(
-  value
-) {
+function escapeHtml(value) {
 
   return String(
     value ?? ''
@@ -1577,10 +2002,11 @@ function escapeHtml(
       /'/g,
       '&#039;'
     );
-
 }
 
 </script>
 
+
 </body>
+
 </html>
