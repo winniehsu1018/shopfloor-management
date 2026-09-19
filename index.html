@@ -776,18 +776,14 @@
 
       <div class="form-group">
 
-        <label for="returnDate">
-
-          預計交回日
-          <span class="required">*</span>
-
-        </label>
+       <label for="returnDate">
+  預計交回日（選填）
+</label>
 
 
         <input
           type="date"
           id="returnDate"
-          required
         >
 
       </div>
@@ -1417,30 +1413,19 @@ async function submitBatch(event) {
     return;
   }
 
-
-  if (!returnDate) {
-
-    showMessage(
-      '請選擇預計交回日',
-      'error'
-    );
-
-    return;
-  }
-
-
   if (
-    returnDate <
-    arrivalDate
-  ) {
+  returnDate &&
+  returnDate < arrivalDate
+) {
 
-    showMessage(
-      '預計交回日不可早於來料日期',
-      'error'
-    );
+  showMessage(
+    '預計交回日不可早於來料日期',
+    'error'
+  );
 
-    return;
-  }
+  return;
+}
+
 
 
   if (!materialSource) {
@@ -1792,7 +1777,7 @@ function renderTodayBatches(
               預計交回：
 
               ${escapeHtml(
-                batch.returnDate || '-'
+                batch.returnDate || '未設定'
               )}
 
             </div>
