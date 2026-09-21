@@ -2089,7 +2089,7 @@ function renderTodayBatches(
                   this
                 )"
               >
-                🖨️ 產生／重新產生加工回報單
+                🖨️ 產生加工回報單
               </button>
             </div>
 
@@ -2112,7 +2112,7 @@ function renderTodayBatches(
 
 
 // ============================================================
-// 產生／重新產生加工回報單
+// 產生加工回報單
 // ============================================================
 
 async function regenerateReport(
@@ -2145,7 +2145,7 @@ async function regenerateReport(
     if (!result.success) {
       throw new Error(
         result.message ||
-        '重新產生失敗'
+        '產生失敗'
       );
     }
 
@@ -2156,7 +2156,7 @@ async function regenerateReport(
     }
 
     showMessage(
-      `批次 ${batchId} 的加工回報單已重新產生`,
+      `批次 ${batchId} 的加工回報單已產生`,
       'success'
     );
 
@@ -2171,7 +2171,7 @@ async function regenerateReport(
 
     showMessage(
       error.message ||
-      '重新產生加工回報單失敗',
+      '產生加工回報單失敗',
       'error'
     );
 
