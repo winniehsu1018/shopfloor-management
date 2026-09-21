@@ -497,7 +497,7 @@
           id="materialLotHint"
           class="field-hint"
         >
-          請依客戶來料標示輸入。
+          請依供應商批號標示輸入。
         </div>
       </div>
 
@@ -1134,13 +1134,13 @@ function updateMaterialSourceUI() {
 
   } else {
     lotLabel.textContent =
-      '來料批次號（供應商 Lot）';
+      '來料批次號（供應商批號）';
 
     lotInput.placeholder =
-      '輸入供應商來料批次號';
+      '輸入供應商批號';
 
     lotHint.textContent =
-      '請依供應商來料標示輸入。';
+      '請依供應商批號標示輸入。';
 
     supplier.readOnly =
       false;
@@ -1826,6 +1826,12 @@ function resetEntryFields() {
 
   document
     .getElementById(
+      'workOrderNo'
+    )
+    .value = '';
+
+  document
+    .getElementById(
       'forgingDate'
     )
     .value = '';
@@ -2238,90 +2244,6 @@ async function apiGet(
   return await response.json();
 }
 
-
-
-// ============================================================
-// 產生／重新產生加工回報單
-// ============================================================
-
-async function regenerateReport(
-  batchId,
-  button
-) {
-  if (!batchId || !button) {
-    return;
-  }
-
-  const originalText =
-    button.textContent;
-
-  try {
-    button.disabled = true;
-    button.textContent =
-      '產生中...';
-
-    const result =
-      await apiGet(
-        'regenerateReport',
-        {
-          userId:
-            currentUserId,
-          batchId:
-            batchId
-        }
-      );
-
-    if (!result.success) {
-      throw new Error(
-        result.message ||
-        '重新產生失敗'
-      );
-    }
-
-    if (!result.pdfUrl) {
-      throw new Error(
-        'PDF 已執行產生，但沒有取得檔案網址'
-      );
-    }
-
-    showMessage(
-      `批次 ${batchId} 的加工回報單已重新產生`,
-      'success'
-    );
-
-    // 直接開啟新產生的 PDF
-    window.open(
-      result.pdfUrl,
-      '_blank'
-    );
-
-  } catch (error) {
-    console.error(error);
-
-    showMessage(
-      error.message ||
-      '重新產生加工回報單失敗',
-      'error'
-    );
-
-  } finally {
-    button.disabled = false;
-    button.textContent =
-      originalText;
-  }
-}
-
-
-// 避免批次 ID 放進 onclick 字串時破壞 JavaScript
-function escapeJsString(value) {
-  return String(
-    value == null ? '' : value
-  )
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/\r/g, '\\r')
-    .replace(/\n/g, '\\n');
-}
 
 
 // ============================================================
