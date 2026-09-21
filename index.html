@@ -1105,7 +1105,7 @@ function updateMaterialSourceUI() {
 
   if (materialSource === '客供料') {
     lotLabel.textContent =
-      '來料批次號（客戶 Lot）';
+      '來料批次號（供應商批號）';
 
     lotInput.placeholder =
       '輸入客戶來料批次號';
@@ -1562,16 +1562,14 @@ async function submitBatch(event) {
 
   if (!materialLotNo) {
     showMessage(
-      materialSource === '客供料'
-        ? '請輸入來料批次號（客戶 Lot）'
-        : '請輸入來料批次號（供應商 Lot）',
-      'error'
+        '請輸入來料批次號（供應商批號）',
+        'error'
     );
 
     document
-      .getElementById(
-        'materialLotNo'
-      )
+        .getElementById(
+            'materialLotNo'
+        )
       .focus();
 
     return;
