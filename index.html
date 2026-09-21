@@ -697,6 +697,21 @@
       </div>
 
 
+
+      <div class="form-group">
+        <label for="workOrderNo">
+          工令單號（選填）
+        </label>
+
+        <input
+          type="text"
+          id="workOrderNo"
+          placeholder="例如：工令單號"
+          maxlength="100"
+        >
+      </div>
+
+
       <div class="form-group">
         <label for="forgingDate">
           毛胚製造日期（選填）
@@ -1499,6 +1514,14 @@ async function submitBatch(event) {
     boxCount * boxWeight +
     tailWeight;
 
+  const workOrderNo =
+    document
+      .getElementById(
+        'workOrderNo'
+      )
+      .value
+      .trim();
+
   const forgingDate =
     document
       .getElementById(
@@ -1657,6 +1680,9 @@ async function submitBatch(event) {
 
     returnDate:
       returnDate,
+
+    workOrderNo:
+      workOrderNo,
 
     forgingDate:
       forgingDate,
@@ -2018,19 +2044,34 @@ function renderTodayBatches(
             </div>
 
             ${
+              batch.workOrderNo ||
               batch.forgingDate ||
               batch.forgingMachine
                 ? `
-                  <div class="batch-detail">
-                    鍛打：
-                    ${escapeHtml(
-                      batch.forgingDate || '-'
-                    )}
-                    ・
-                    ${escapeHtml(
-                      batch.forgingMachine || '-'
-                    )}
-                  </div>
+                  ${
+                    batch.workOrderNo
+                      ? `
+                        <div class="batch-detail">
+                          工令單號：
+                          ${escapeHtml(batch.workOrderNo)}
+                        </div>
+                      `
+                      : ''
+                  }
+
+                  ${
+                    batch.forgingDate ||
+                    batch.forgingMachine
+                      ? `
+                        <div class="batch-detail">
+                          毛胚製造：
+                          ${escapeHtml(batch.forgingDate || '-')}
+                          ・
+                          ${escapeHtml(batch.forgingMachine || '-')}
+                        </div>
+                      `
+                      : ''
+                  }
                 `
                 : ''
             }
