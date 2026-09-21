@@ -159,6 +159,20 @@
       cursor: not-allowed;
     }
 
+    .pdf-btn {
+      display: none;
+      width: 100%;
+      margin-top: 10px;
+      padding: 13px;
+      border-radius: 12px;
+      text-align: center;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      background: #2563eb;
+      color: #fff;
+    }
+
     .message {
       display: none;
       border-radius: 10px;
@@ -538,6 +552,32 @@
 
 
       <div class="form-group">
+        <label for="forgingDate">
+          鍛打製造日期（選填）
+        </label>
+
+        <input
+          type="date"
+          id="forgingDate"
+        >
+      </div>
+
+
+      <div class="form-group">
+        <label for="forgingMachine">
+          鍛打製造機台（選填）
+        </label>
+
+        <input
+          type="text"
+          id="forgingMachine"
+          placeholder="例如：鍛打機台編號"
+          maxlength="100"
+        >
+      </div>
+
+
+      <div class="form-group">
         <label for="returnDate">
           預計完成日（選填）
         </label>
@@ -568,6 +608,16 @@
       >
         建立生產批次
       </button>
+
+      <a
+        id="pdfBtn"
+        class="pdf-btn"
+        href="#"
+        target="_blank"
+        rel="noopener"
+      >
+        🖨️ 開啟加工回報單
+      </a>
 
     </form>
 
@@ -1128,6 +1178,14 @@ async function submitBatch(event) {
 
   clearMessage();
 
+  const pdfBtn =
+    document.getElementById(
+      'pdfBtn'
+    );
+
+  pdfBtn.style.display = 'none';
+  pdfBtn.removeAttribute('href');
+
   const materialSource =
     getMaterialSource();
 
@@ -1178,6 +1236,21 @@ async function submitBatch(event) {
         )
         .value
     );
+
+  const forgingDate =
+    document
+      .getElementById(
+        'forgingDate'
+      )
+      .value;
+
+  const forgingMachine =
+    document
+      .getElementById(
+        'forgingMachine'
+      )
+      .value
+      .trim();
 
   const returnDate =
     document
@@ -1324,6 +1397,12 @@ async function submitBatch(event) {
     returnDate:
       returnDate,
 
+    forgingDate:
+      forgingDate,
+
+    forgingMachine:
+      forgingMachine,
+
     materialSource:
       materialSource,
 
@@ -1366,10 +1445,25 @@ async function submitBatch(event) {
       );
 
     } else {
+      const extraMessage =
+        result.pdfWarning
+          ? '；批次已建立，但加工回報單產生失敗：' + result.pdfWarning
+          : '';
+
       showMessage(
-        `建立成功！批次 ID：${result.batchId}`,
-        'success'
+        `建立成功！批次 ID：${result.batchId}${extraMessage}`,
+        result.pdfWarning
+          ? 'error'
+          : 'success'
       );
+    }
+
+    if (result.pdfUrl) {
+      pdfBtn.href =
+        result.pdfUrl;
+
+      pdfBtn.style.display =
+        'block';
     }
 
     currentRequestId = null;
@@ -1433,6 +1527,18 @@ function resetEntryFields() {
   document
     .getElementById(
       'weight'
+    )
+    .value = '';
+
+  document
+    .getElementById(
+      'forgingDate'
+    )
+    .value = '';
+
+  document
+    .getElementById(
+      'forgingMachine'
     )
     .value = '';
 
@@ -1605,6 +1711,24 @@ function renderTodayBatches(
                 batch.returnDate || '-'
               )}
             </div>
+
+            ${
+              batch.forgingDate ||
+              batch.forgingMachine
+                ? `
+                  <div class="batch-detail">
+                    鍛打：
+                    ${escapeHtml(
+                      batch.forgingDate || '-'
+                    )}
+                    ・
+                    ${escapeHtml(
+                      batch.forgingMachine || '-'
+                    )}
+                  </div>
+                `
+                : ''
+            }
 
             <div class="batch-detail">
               ${escapeHtml(
