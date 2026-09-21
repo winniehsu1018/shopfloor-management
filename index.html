@@ -545,20 +545,20 @@
 
       <div class="form-group">
         <label for="customer">
-          客戶（新件號不知道可留白）
+          客戶（選填）
         </label>
 
         <input
           type="text"
           id="customer"
-          placeholder="既有件號自動帶入；新件號不知道可留白"
+          placeholder="既有件號自動帶入；不知道客戶可留白"
         >
 
         <div
           id="customerHint"
           class="field-hint"
         >
-          選擇既有件號時由系統自動帶入；新件號若知道客戶可填寫，不知道可先留白。
+          既有件號由系統自動帶入；若不知道客戶可留白，後續由管理人員確認。
         </div>
       </div>
 
@@ -566,7 +566,7 @@
       <div class="form-group">
         <label for="supplier">
           供料方
-          <span class="required">*</span>
+          <span id="supplierRequiredMark" class="required">*</span>
         </label>
 
         <input
@@ -1083,6 +1083,11 @@ function updateMaterialSourceUI() {
       'supplierHint'
     );
 
+  const supplierRequiredMark =
+    document.getElementById(
+      'supplierRequiredMark'
+    );
+
   if (materialSource === '客供料') {
     lotLabel.textContent =
       '來料批次號（客戶 Lot）';
@@ -1096,11 +1101,19 @@ function updateMaterialSourceUI() {
     supplier.readOnly =
       true;
 
+    supplier.required =
+      false;
+
+    if (supplierRequiredMark) {
+      supplierRequiredMark.style.display =
+        'none';
+    }
+
     supplier.placeholder =
-      '系統自動等於客戶';
+      '知道客戶時自動等於客戶；不知道可留白';
 
     supplierHint.textContent =
-      '客供料的供料方會自動等於客戶。';
+      '客供料：知道客戶時供料方會自動等於客戶；不知道客戶時可留白。';
 
     syncSupplierWithCustomer();
 
@@ -1116,6 +1129,14 @@ function updateMaterialSourceUI() {
 
     supplier.readOnly =
       false;
+
+    supplier.required =
+      true;
+
+    if (supplierRequiredMark) {
+      supplierRequiredMark.style.display =
+        '';
+    }
 
     supplier.placeholder =
       '輸入供應商 / 廠商';
@@ -1248,7 +1269,7 @@ function updatePartAndCustomer() {
 
     if (partNo) {
       customerHint.textContent =
-        '此件號不在既有清單中；若知道客戶可填寫，不知道可先留白，後續由管理人員確認。';
+        '此件號不在既有清單中；客戶為選填，不知道可先留白，後續由管理人員確認。';
 
       customerHint.classList.add(
         'manual-hint'
@@ -1256,7 +1277,7 @@ function updatePartAndCustomer() {
 
     } else {
       customerHint.textContent =
-        '選擇既有件號時由系統自動帶入；新件號若知道客戶可填寫，不知道可先留白。';
+        '既有件號由系統自動帶入；若不知道客戶可留白，後續由管理人員確認。';
 
       customerHint.classList.remove(
         'manual-hint'
@@ -1808,7 +1829,7 @@ function resetEntryFields() {
       'customerHint'
     )
     .textContent =
-      '選擇既有件號時由系統自動帶入；新件號若知道客戶可填寫，不知道可先留白。';
+      '既有件號由系統自動帶入；若不知道客戶可留白，後續由管理人員確認。';
 
   document
     .getElementById(
