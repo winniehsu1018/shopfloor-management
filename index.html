@@ -334,6 +334,39 @@
     }
 
     #mainApp { display: none; }
+  
+    /* =========================================================
+       手機版日期欄位高度統一
+       iPhone / LINE 內建瀏覽器會對 type="date" 套用原生樣式，
+       因此另外固定高度，避免日期欄位特別高。
+       ========================================================= */
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      min-height: 44px;
+      height: 44px;
+      box-sizing: border-box;
+    }
+
+    input[type="date"] {
+      padding-top: 0;
+      padding-bottom: 0;
+      line-height: normal;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="date"]::-webkit-date-and-time-value {
+      margin: 0;
+      padding: 0;
+      text-align: left;
+      min-height: 0;
+    }
+
+    input[type="date"]::-webkit-datetime-edit {
+      padding: 0;
+    }
+
   </style>
 </head>
 
