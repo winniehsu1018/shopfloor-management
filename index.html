@@ -16,9 +16,7 @@
   </script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -40,16 +38,14 @@
     }
 
     .card {
-      background: #ffffff;
+      background: #fff;
       border-radius: 16px;
       padding: 20px;
-      box-shadow:
-        0 2px 12px
-        rgba(0, 0, 0, 0.06);
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
     }
 
     h1 {
-      margin: 0 0 6px 0;
+      margin: 0 0 6px;
       font-size: 24px;
     }
 
@@ -83,16 +79,13 @@
       font-size: 15px;
     }
 
-    .required {
-      color: #e53935;
-    }
+    .required { color: #e53935; }
 
     input,
     textarea {
       width: 100%;
       padding: 12px;
-      border:
-        1px solid #d7dbe0;
+      border: 1px solid #d7dbe0;
       border-radius: 10px;
       font-size: 16px;
       background: #fff;
@@ -121,6 +114,10 @@
       line-height: 1.5;
     }
 
+    .manual-hint {
+      color: #a15c00;
+    }
+
     .radio-group {
       display: flex;
       gap: 10px;
@@ -128,8 +125,7 @@
 
     .radio-option {
       flex: 1;
-      border:
-        1px solid #d7dbe0;
+      border: 1px solid #d7dbe0;
       border-radius: 10px;
       padding: 12px;
       display: flex;
@@ -153,7 +149,7 @@
       font-size: 17px;
       font-weight: 700;
       background: #1f9d55;
-      color: white;
+      color: #fff;
       cursor: pointer;
       margin-top: 4px;
     }
@@ -187,14 +183,12 @@
     .today-section {
       margin-top: 26px;
       padding-top: 20px;
-      border-top:
-        1px solid #e5e7eb;
+      border-top: 1px solid #e5e7eb;
     }
 
     .today-header {
       display: flex;
-      justify-content:
-        space-between;
+      justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
     }
@@ -215,8 +209,7 @@
 
     .batch-card {
       background: #fff;
-      border:
-        1px solid #e4e7eb;
+      border: 1px solid #e4e7eb;
       border-radius: 12px;
       padding: 14px;
       margin-bottom: 10px;
@@ -224,8 +217,7 @@
 
     .batch-card-top {
       display: flex;
-      justify-content:
-        space-between;
+      justify-content: space-between;
       align-items: center;
       gap: 10px;
     }
@@ -243,7 +235,7 @@
       white-space: nowrap;
     }
 
-    .customer-batch {
+    .material-lot {
       margin-top: 7px;
       font-size: 14px;
       font-weight: 600;
@@ -283,13 +275,11 @@
     .status-card {
       width: 100%;
       max-width: 370px;
-      background: white;
+      background: #fff;
       border-radius: 18px;
       padding: 28px 22px;
       text-align: center;
-      box-shadow:
-        0 4px 18px
-        rgba(0, 0, 0, 0.07);
+      box-shadow: 0 4px 18px rgba(0,0,0,.07);
     }
 
     .status-icon {
@@ -308,9 +298,7 @@
       line-height: 1.6;
     }
 
-    #mainApp {
-      display: none;
-    }
+    #mainApp { display: none; }
   </style>
 </head>
 
@@ -321,9 +309,7 @@
   class="full-screen"
 >
   <div class="status-card">
-    <div class="status-icon">
-      ⏳
-    </div>
+    <div class="status-icon">⏳</div>
 
     <div class="status-title">
       系統載入中
@@ -345,9 +331,7 @@
   style="display:none;"
 >
   <div class="status-card">
-    <div class="status-icon">
-      ⚠️
-    </div>
+    <div class="status-icon">⚠️</div>
 
     <div class="status-title">
       無法進入系統
@@ -369,9 +353,7 @@
 >
   <div class="card">
 
-    <h1>
-      📦 生產批次登錄
-    </h1>
+    <h1>📦 生產批次登錄</h1>
 
     <div class="subtitle">
       客供料 / 自購料生產批次管理
@@ -382,9 +364,7 @@
       <span
         id="employeeName"
         class="user-name"
-      >
-        -
-      </span>
+      >-</span>
     </div>
 
     <div
@@ -429,31 +409,27 @@
       </div>
 
 
-      <!-- 新增：客戶批次號 -->
-      <div
-        class="form-group"
-        id="customerBatchGroup"
-      >
-        <label for="customerBatchNo">
-          客戶批次號
-          <span
-            id="customerBatchRequired"
-            class="required"
-          >*</span>
+      <div class="form-group">
+        <label for="materialLotNo">
+          <span id="materialLotLabel">
+            來料批次號（客戶 Lot）
+          </span>
+          <span class="required">*</span>
         </label>
 
         <input
           type="text"
-          id="customerBatchNo"
-          placeholder="輸入客戶 Lot / 批次號"
+          id="materialLotNo"
+          placeholder="輸入客戶來料批次號"
           maxlength="100"
+          required
         >
 
         <div
-          id="customerBatchHint"
+          id="materialLotHint"
           class="field-hint"
         >
-          客供料必填；請依客戶來料標示輸入。
+          請依客戶來料標示輸入。
         </div>
       </div>
 
@@ -482,26 +458,64 @@
           type="text"
           id="partSearch"
           list="partList"
-          placeholder="輸入或選擇件號"
+          placeholder="可從清單選擇，也可手動輸入"
           required
         >
 
         <datalist
           id="partList"
         ></datalist>
+
+        <div
+          id="partHint"
+          class="field-hint"
+        >
+          可從既有件號清單選擇，也可直接輸入新件號。
+        </div>
       </div>
 
 
       <div class="form-group">
         <label for="customer">
           客戶
+          <span class="required">*</span>
         </label>
 
         <input
           type="text"
           id="customer"
-          readonly
+          placeholder="選擇既有件號時自動帶入"
+          required
         >
+
+        <div
+          id="customerHint"
+          class="field-hint"
+        >
+          選擇既有件號時由系統自動帶入；新件號請手動輸入。
+        </div>
+      </div>
+
+
+      <div class="form-group">
+        <label for="supplier">
+          供料方
+          <span class="required">*</span>
+        </label>
+
+        <input
+          type="text"
+          id="supplier"
+          placeholder="客供料會自動等於客戶"
+          required
+        >
+
+        <div
+          id="supplierHint"
+          class="field-hint"
+        >
+          客供料：系統自動帶入客戶；自購料：請輸入供應商 / 廠商。
+        </div>
       </div>
 
 
@@ -525,7 +539,7 @@
 
       <div class="form-group">
         <label for="returnDate">
-          預計交回日（選填）
+          預計完成日（選填）
         </label>
 
         <input
@@ -561,9 +575,7 @@
     <section class="today-section">
 
       <div class="today-header">
-        <h2>
-          今日已建立批次
-        </h2>
+        <h2>今日已建立批次</h2>
 
         <button
           type="button"
@@ -705,7 +717,7 @@ async function initializeApp() {
 
     await loadParts();
 
-    updateCustomerBatchRequirement();
+    updateMaterialSourceUI();
 
     document
       .getElementById(
@@ -816,7 +828,7 @@ function setToday() {
 
 
 // ============================================================
-// 料件來源 → 客戶批次號必填狀態
+// 料件來源 UI
 // ============================================================
 
 document
@@ -826,52 +838,95 @@ document
   .forEach(function(radio) {
     radio.addEventListener(
       'change',
-      updateCustomerBatchRequirement
+      updateMaterialSourceUI
     );
   });
 
 
-function updateCustomerBatchRequirement() {
+function getMaterialSource() {
   const sourceElement =
     document.querySelector(
       'input[name="materialSource"]:checked'
     );
 
+  return sourceElement
+    ? sourceElement.value
+    : '';
+}
+
+
+function updateMaterialSourceUI() {
   const materialSource =
-    sourceElement
-      ? sourceElement.value
-      : '';
+    getMaterialSource();
 
-  const input =
+  const lotLabel =
     document.getElementById(
-      'customerBatchNo'
+      'materialLotLabel'
     );
 
-  const requiredMark =
+  const lotInput =
     document.getElementById(
-      'customerBatchRequired'
+      'materialLotNo'
     );
 
-  const hint =
+  const lotHint =
     document.getElementById(
-      'customerBatchHint'
+      'materialLotHint'
     );
 
-  const isCustomerSupplied =
-    materialSource === '客供料';
+  const supplier =
+    document.getElementById(
+      'supplier'
+    );
 
-  input.required =
-    isCustomerSupplied;
+  const supplierHint =
+    document.getElementById(
+      'supplierHint'
+    );
 
-  requiredMark.style.display =
-    isCustomerSupplied
-      ? 'inline'
-      : 'none';
+  if (materialSource === '客供料') {
+    lotLabel.textContent =
+      '來料批次號（客戶 Lot）';
 
-  hint.textContent =
-    isCustomerSupplied
-      ? '客供料必填；請依客戶來料標示輸入。'
-      : '自購料可留白。';
+    lotInput.placeholder =
+      '輸入客戶來料批次號';
+
+    lotHint.textContent =
+      '請依客戶來料標示輸入。';
+
+    supplier.readOnly =
+      true;
+
+    supplier.placeholder =
+      '系統自動等於客戶';
+
+    supplierHint.textContent =
+      '客供料的供料方會自動等於客戶。';
+
+    syncSupplierWithCustomer();
+
+  } else {
+    lotLabel.textContent =
+      '來料批次號（供應商 Lot）';
+
+    lotInput.placeholder =
+      '輸入供應商來料批次號';
+
+    lotHint.textContent =
+      '請依供應商來料標示輸入。';
+
+    supplier.readOnly =
+      false;
+
+    supplier.placeholder =
+      '輸入供應商 / 廠商';
+
+    supplierHint.textContent =
+      '自購料請輸入實際供料的供應商 / 廠商。';
+
+    // 切換成自購料時，避免保留原本自動帶入的客戶名稱
+    supplier.value = '';
+  }
 }
 
 
@@ -933,6 +988,9 @@ async function loadParts() {
 
 // ============================================================
 // 件號 → 客戶
+//
+// 清單內件號：自動帶入客戶並鎖定
+// 新件號：允許手動輸入客戶
 // ============================================================
 
 document
@@ -941,28 +999,110 @@ document
   )
   .addEventListener(
     'input',
-    function() {
-      const partNo =
-        this.value.trim();
-
-      const customer =
-        document.getElementById(
-          'customer'
-        );
-
-      if (
-        partMap[partNo]
-      ) {
-        customer.value =
-          partMap[
-            partNo
-          ].customer || '';
-
-      } else {
-        customer.value = '';
-      }
-    }
+    updatePartAndCustomer
   );
+
+
+function updatePartAndCustomer() {
+  const partNo =
+    document
+      .getElementById(
+        'partSearch'
+      )
+      .value
+      .trim();
+
+  const customer =
+    document.getElementById(
+      'customer'
+    );
+
+  const customerHint =
+    document.getElementById(
+      'customerHint'
+    );
+
+  if (
+    partNo &&
+    partMap[partNo]
+  ) {
+    customer.value =
+      partMap[
+        partNo
+      ].customer || '';
+
+    customer.readOnly =
+      true;
+
+    customerHint.textContent =
+      '此件號來自既有清單，客戶已自動帶入。';
+
+    customerHint.classList.remove(
+      'manual-hint'
+    );
+
+  } else {
+    customer.readOnly =
+      false;
+
+    customer.value = '';
+
+    if (partNo) {
+      customerHint.textContent =
+        '此件號不在既有清單中，請手動輸入客戶。';
+
+      customerHint.classList.add(
+        'manual-hint'
+      );
+
+    } else {
+      customerHint.textContent =
+        '選擇既有件號時由系統自動帶入；新件號請手動輸入。';
+
+      customerHint.classList.remove(
+        'manual-hint'
+      );
+    }
+  }
+
+  syncSupplierWithCustomer();
+}
+
+
+// 客戶手動輸入時，客供料同步更新供料方
+document
+  .getElementById(
+    'customer'
+  )
+  .addEventListener(
+    'input',
+    syncSupplierWithCustomer
+  );
+
+
+function syncSupplierWithCustomer() {
+  if (
+    getMaterialSource() !==
+    '客供料'
+  ) {
+    return;
+  }
+
+  const customer =
+    document
+      .getElementById(
+        'customer'
+      )
+      .value
+      .trim();
+
+  document
+    .getElementById(
+      'supplier'
+    )
+    .value =
+      customer;
+}
 
 
 // ============================================================
@@ -988,20 +1128,13 @@ async function submitBatch(event) {
 
   clearMessage();
 
-  const sourceElement =
-    document.querySelector(
-      'input[name="materialSource"]:checked'
-    );
-
   const materialSource =
-    sourceElement
-      ? sourceElement.value
-      : '';
+    getMaterialSource();
 
-  const customerBatchNo =
+  const materialLotNo =
     document
       .getElementById(
-        'customerBatchNo'
+        'materialLotNo'
       )
       .value
       .trim();
@@ -1017,6 +1150,22 @@ async function submitBatch(event) {
     document
       .getElementById(
         'partSearch'
+      )
+      .value
+      .trim();
+
+  const customer =
+    document
+      .getElementById(
+        'customer'
+      )
+      .value
+      .trim();
+
+  const supplier =
+    document
+      .getElementById(
+        'supplier'
       )
       .value
       .trim();
@@ -1053,18 +1202,17 @@ async function submitBatch(event) {
     return;
   }
 
-  if (
-    materialSource === '客供料' &&
-    !customerBatchNo
-  ) {
+  if (!materialLotNo) {
     showMessage(
-      '客供料請輸入客戶批次號',
+      materialSource === '客供料'
+        ? '請輸入來料批次號（客戶 Lot）'
+        : '請輸入來料批次號（供應商 Lot）',
       'error'
     );
 
     document
       .getElementById(
-        'customerBatchNo'
+        'materialLotNo'
       )
       .focus();
 
@@ -1079,14 +1227,45 @@ async function submitBatch(event) {
     return;
   }
 
-  if (
-    !partNo ||
-    !partMap[partNo]
-  ) {
+  if (!partNo) {
     showMessage(
-      '請從件號清單中選擇正確的件號',
+      '請輸入件號',
       'error'
     );
+    return;
+  }
+
+  if (!customer) {
+    showMessage(
+      '請輸入客戶',
+      'error'
+    );
+
+    document
+      .getElementById(
+        'customer'
+      )
+      .focus();
+
+    return;
+  }
+
+  if (!supplier) {
+    showMessage(
+      materialSource === '客供料'
+        ? '無法取得供料方，請確認客戶'
+        : '自購料請輸入供料方 / 廠商',
+      'error'
+    );
+
+    document
+      .getElementById(
+        materialSource === '客供料'
+          ? 'customer'
+          : 'supplier'
+      )
+      .focus();
+
     return;
   }
 
@@ -1106,7 +1285,7 @@ async function submitBatch(event) {
     returnDate < arrivalDate
   ) {
     showMessage(
-      '預計交回日不可早於來料日期',
+      '預計完成日不可早於來料日期',
       'error'
     );
     return;
@@ -1124,14 +1303,20 @@ async function submitBatch(event) {
     userId:
       currentUserId,
 
-    customerBatchNo:
-      customerBatchNo,
+    materialLotNo:
+      materialLotNo,
 
     arrivalDate:
       arrivalDate,
 
     partNo:
       partNo,
+
+    customer:
+      customer,
+
+    supplier:
+      supplier,
 
     weight:
       weight,
@@ -1189,41 +1374,7 @@ async function submitBatch(event) {
 
     currentRequestId = null;
 
-    document
-      .getElementById(
-        'customerBatchNo'
-      )
-      .value = '';
-
-    document
-      .getElementById(
-        'partSearch'
-      )
-      .value = '';
-
-    document
-      .getElementById(
-        'customer'
-      )
-      .value = '';
-
-    document
-      .getElementById(
-        'weight'
-      )
-      .value = '';
-
-    document
-      .getElementById(
-        'returnDate'
-      )
-      .value = '';
-
-    document
-      .getElementById(
-        'remark'
-      )
-      .value = '';
+    resetEntryFields();
 
     await loadTodayBatches();
 
@@ -1244,6 +1395,75 @@ async function submitBatch(event) {
     button.textContent =
       '建立生產批次';
   }
+}
+
+
+// ============================================================
+// 成功後清空輸入
+// 保留：料件來源、來料日期
+// ============================================================
+
+function resetEntryFields() {
+  document
+    .getElementById(
+      'materialLotNo'
+    )
+    .value = '';
+
+  document
+    .getElementById(
+      'partSearch'
+    )
+    .value = '';
+
+  const customer =
+    document.getElementById(
+      'customer'
+    );
+
+  customer.value = '';
+  customer.readOnly = false;
+
+  document
+    .getElementById(
+      'supplier'
+    )
+    .value = '';
+
+  document
+    .getElementById(
+      'weight'
+    )
+    .value = '';
+
+  document
+    .getElementById(
+      'returnDate'
+    )
+    .value = '';
+
+  document
+    .getElementById(
+      'remark'
+    )
+    .value = '';
+
+  document
+    .getElementById(
+      'customerHint'
+    )
+    .textContent =
+      '選擇既有件號時由系統自動帶入；新件號請手動輸入。';
+
+  document
+    .getElementById(
+      'customerHint'
+    )
+    .classList.remove(
+      'manual-hint'
+    );
+
+  updateMaterialSourceUI();
 }
 
 
@@ -1343,13 +1563,6 @@ function renderTodayBatches(
             ? `${escapeHtml(batch.arrivalWeight)} kg`
             : '-';
 
-        const customerBatchText =
-          batch.customerBatchNo
-            ? escapeHtml(
-                batch.customerBatchNo
-              )
-            : '未填';
-
         return `
           <div class="batch-card">
 
@@ -1363,8 +1576,11 @@ function renderTodayBatches(
               </div>
             </div>
 
-            <div class="customer-batch">
-              客戶批次號：${customerBatchText}
+            <div class="material-lot">
+              來料批次號：
+              ${escapeHtml(
+                batch.materialLotNo || '-'
+              )}
             </div>
 
             <div class="batch-part">
@@ -1372,13 +1588,19 @@ function renderTodayBatches(
             </div>
 
             <div class="batch-detail">
+              客戶：
               ${escapeHtml(batch.customer)}
+            </div>
+
+            <div class="batch-detail">
+              供料方：
+              ${escapeHtml(batch.supplier)}
               ・
               ${weightText}
             </div>
 
             <div class="batch-detail">
-              預計交回：
+              預計完成：
               ${escapeHtml(
                 batch.returnDate || '-'
               )}
@@ -1453,7 +1675,7 @@ async function apiGet(
 
 // ============================================================
 // API POST
-// 不設定 Content-Type: application/json，避免 CORS preflight
+// 不設定 Content-Type，避免不必要的 CORS preflight
 // ============================================================
 
 async function apiPost(data) {
@@ -1525,26 +1747,11 @@ function escapeHtml(value) {
   return String(
     value ?? ''
   )
-    .replace(
-      /&/g,
-      '&amp;'
-    )
-    .replace(
-      /</g,
-      '&lt;'
-    )
-    .replace(
-      />/g,
-      '&gt;'
-    )
-    .replace(
-      /"/g,
-      '&quot;'
-    )
-    .replace(
-      /'/g,
-      '&#039;'
-    );
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 </script>
