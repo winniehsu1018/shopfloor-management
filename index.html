@@ -269,6 +269,27 @@
       line-height: 1.5;
     }
 
+    .batch-actions {
+      margin-top: 12px;
+    }
+
+    .regen-btn {
+      width: 100%;
+      border: 1px solid #2563eb;
+      background: #fff;
+      color: #2563eb;
+      border-radius: 9px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .regen-btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
     .empty-message {
       text-align: center;
       color: #888;
@@ -1730,6 +1751,19 @@ function renderTodayBatches(
                 : ''
             }
 
+            <div class="batch-actions">
+              <button
+                type="button"
+                class="regen-btn"
+                onclick="regenerateReport(
+                  '${escapeJsString(batch.batchId || '')}',
+                  this
+                )"
+              >
+                🖨️ 重新產生加工回報單
+              </button>
+            </div>
+
             <div class="batch-detail">
               ${escapeHtml(
                 batch.materialSource
@@ -1744,6 +1778,91 @@ function renderTodayBatches(
         `;
       })
       .join('');
+}
+
+
+
+// ============================================================
+// 重新產生加工回報單
+// ============================================================
+
+async function regenerateReport(
+  batchId,
+  button
+) {
+  if (!batchId || !button) {
+    return;
+  }
+
+  const originalText =
+    button.textContent;
+
+  try {
+    button.disabled = true;
+    button.textContent =
+      '產生中...';
+
+    const result =
+      await apiGet(
+        'regenerateReport',
+        {
+          userId:
+            currentUserId,
+          batchId:
+            batchId
+        }
+      );
+
+    if (!result.success) {
+      throw new Error(
+        result.message ||
+        '重新產生失敗'
+      );
+    }
+
+    if (!result.pdfUrl) {
+      throw new Error(
+        'PDF 已執行產生，但沒有取得檔案網址'
+      );
+    }
+
+    showMessage(
+      `批次 ${batchId} 的加工回報單已重新產生`,
+      'success'
+    );
+
+    // 直接開啟新產生的 PDF
+    window.open(
+      result.pdfUrl,
+      '_blank'
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    showMessage(
+      error.message ||
+      '重新產生加工回報單失敗',
+      'error'
+    );
+
+  } finally {
+    button.disabled = false;
+    button.textContent =
+      originalText;
+  }
+}
+
+
+// 避免批次 ID 放進 onclick 字串時破壞 JavaScript
+function escapeJsString(value) {
+  return String(
+    value == null ? '' : value
+  )
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n');
 }
 
 
@@ -1794,6 +1913,91 @@ async function apiGet(
   }
 
   return await response.json();
+}
+
+
+
+// ============================================================
+// 重新產生加工回報單
+// ============================================================
+
+async function regenerateReport(
+  batchId,
+  button
+) {
+  if (!batchId || !button) {
+    return;
+  }
+
+  const originalText =
+    button.textContent;
+
+  try {
+    button.disabled = true;
+    button.textContent =
+      '產生中...';
+
+    const result =
+      await apiGet(
+        'regenerateReport',
+        {
+          userId:
+            currentUserId,
+          batchId:
+            batchId
+        }
+      );
+
+    if (!result.success) {
+      throw new Error(
+        result.message ||
+        '重新產生失敗'
+      );
+    }
+
+    if (!result.pdfUrl) {
+      throw new Error(
+        'PDF 已執行產生，但沒有取得檔案網址'
+      );
+    }
+
+    showMessage(
+      `批次 ${batchId} 的加工回報單已重新產生`,
+      'success'
+    );
+
+    // 直接開啟新產生的 PDF
+    window.open(
+      result.pdfUrl,
+      '_blank'
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    showMessage(
+      error.message ||
+      '重新產生加工回報單失敗',
+      'error'
+    );
+
+  } finally {
+    button.disabled = false;
+    button.textContent =
+      originalText;
+  }
+}
+
+
+// 避免批次 ID 放進 onclick 字串時破壞 JavaScript
+function escapeJsString(value) {
+  return String(
+    value == null ? '' : value
+  )
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n');
 }
 
 
