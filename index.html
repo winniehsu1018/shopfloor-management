@@ -545,22 +545,20 @@
 
       <div class="form-group">
         <label for="customer">
-          客戶
-          <span class="required">*</span>
+          客戶（新件號不知道可留白）
         </label>
 
         <input
           type="text"
           id="customer"
-          placeholder="選擇既有件號時自動帶入"
-          required
+          placeholder="既有件號自動帶入；新件號不知道可留白"
         >
 
         <div
           id="customerHint"
           class="field-hint"
         >
-          選擇既有件號時由系統自動帶入；新件號請手動輸入。
+          選擇既有件號時由系統自動帶入；新件號若知道客戶可填寫，不知道可先留白。
         </div>
       </div>
 
@@ -575,7 +573,6 @@
           type="text"
           id="supplier"
           placeholder="客供料會自動等於客戶"
-          required
         >
 
         <div
@@ -1251,7 +1248,7 @@ function updatePartAndCustomer() {
 
     if (partNo) {
       customerHint.textContent =
-        '此件號不在既有清單中，請手動輸入客戶。';
+        '此件號不在既有清單中；若知道客戶可填寫，不知道可先留白，後續由管理人員確認。';
 
       customerHint.classList.add(
         'manual-hint'
@@ -1259,7 +1256,7 @@ function updatePartAndCustomer() {
 
     } else {
       customerHint.textContent =
-        '選擇既有件號時由系統自動帶入；新件號請手動輸入。';
+        '選擇既有件號時由系統自動帶入；新件號若知道客戶可填寫，不知道可先留白。';
 
       customerHint.classList.remove(
         'manual-hint'
@@ -1552,34 +1549,18 @@ async function submitBatch(event) {
     return;
   }
 
-  if (!customer) {
+  if (
+    materialSource === '自購料' &&
+    !supplier
+  ) {
     showMessage(
-      '請輸入客戶',
+      '自購料請輸入供料方 / 廠商',
       'error'
     );
 
     document
       .getElementById(
-        'customer'
-      )
-      .focus();
-
-    return;
-  }
-
-  if (!supplier) {
-    showMessage(
-      materialSource === '客供料'
-        ? '無法取得供料方，請確認客戶'
-        : '自購料請輸入供料方 / 廠商',
-      'error'
-    );
-
-    document
-      .getElementById(
-        materialSource === '客供料'
-          ? 'customer'
-          : 'supplier'
+        'supplier'
       )
       .focus();
 
@@ -1827,7 +1808,7 @@ function resetEntryFields() {
       'customerHint'
     )
     .textContent =
-      '選擇既有件號時由系統自動帶入；新件號請手動輸入。';
+      '選擇既有件號時由系統自動帶入；新件號若知道客戶可填寫，不知道可先留白。';
 
   document
     .getElementById(
