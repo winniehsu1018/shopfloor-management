@@ -630,16 +630,6 @@
         建立生產批次
       </button>
 
-      <a
-        id="pdfBtn"
-        class="pdf-btn"
-        href="#"
-        target="_blank"
-        rel="noopener"
-      >
-        🖨️ 開啟加工回報單
-      </a>
-
     </form>
 
 
@@ -1199,14 +1189,6 @@ async function submitBatch(event) {
 
   clearMessage();
 
-  const pdfBtn =
-    document.getElementById(
-      'pdfBtn'
-    );
-
-  pdfBtn.style.display = 'none';
-  pdfBtn.removeAttribute('href');
-
   const materialSource =
     getMaterialSource();
 
@@ -1466,25 +1448,10 @@ async function submitBatch(event) {
       );
 
     } else {
-      const extraMessage =
-        result.pdfWarning
-          ? '；批次已建立，但加工回報單產生失敗：' + result.pdfWarning
-          : '';
-
       showMessage(
-        `建立成功！批次 ID：${result.batchId}${extraMessage}`,
-        result.pdfWarning
-          ? 'error'
-          : 'success'
+        `建立成功！批次 ID：${result.batchId}`,
+        'success'
       );
-    }
-
-    if (result.pdfUrl) {
-      pdfBtn.href =
-        result.pdfUrl;
-
-      pdfBtn.style.display =
-        'block';
     }
 
     currentRequestId = null;
@@ -1760,7 +1727,7 @@ function renderTodayBatches(
                   this
                 )"
               >
-                🖨️ 重新產生加工回報單
+                🖨️ 產生／重新產生加工回報單
               </button>
             </div>
 
@@ -1783,7 +1750,7 @@ function renderTodayBatches(
 
 
 // ============================================================
-// 重新產生加工回報單
+// 產生／重新產生加工回報單
 // ============================================================
 
 async function regenerateReport(
@@ -1918,7 +1885,7 @@ async function apiGet(
 
 
 // ============================================================
-// 重新產生加工回報單
+// 產生／重新產生加工回報單
 // ============================================================
 
 async function regenerateReport(
