@@ -2659,6 +2659,56 @@ async function loadFinishedReportContext() {
       result.summary
     );
 
+    const formEl =
+      document.getElementById(
+        'finishedReportForm'
+      );
+
+    const historyTitle =
+      document.querySelector(
+        '.history-title'
+      );
+
+    const historyEl =
+      document.getElementById(
+        'finishedHistory'
+      );
+
+    if (result.batchCompleted === true) {
+      // 批次完成後：QR 僅供查詢最終總計。
+      // 不再顯示輸入欄位，也不顯示逐筆回報歷程。
+      formEl.style.display = 'none';
+
+      if (historyTitle) {
+        historyTitle.style.display =
+          'none';
+      }
+
+      if (historyEl) {
+        historyEl.style.display =
+          'none';
+      }
+
+      showFinishedMessage(
+        '✅ 此批次已完成，以下為最終成品回報總計。',
+        'success'
+      );
+
+      return;
+    }
+
+    formEl.style.display = 'block';
+
+    if (historyTitle) {
+      historyTitle.style.display =
+        'block';
+    }
+
+    if (historyEl) {
+      historyEl.style.display =
+        'block';
+    }
+
     renderFinishedHistory(
       result.reports || []
     );
@@ -2722,6 +2772,12 @@ function renderFinishedBatchInfo(
   summaryEl.style.display =
     'grid';
 
+  const completed =
+    ['待結算', '待出貨', '已出完']
+      .includes(
+        String(batch.status || '').trim()
+      );
+
   summaryEl.innerHTML =
     `
       <div class="summary-item">
@@ -2729,7 +2785,7 @@ function renderFinishedBatchInfo(
           ${Number(summary.reportCount || 0)}
         </div>
         <div class="summary-label">
-          已回報次數
+          ${completed ? '總回報次數' : '已回報次數'}
         </div>
       </div>
 
@@ -2738,7 +2794,7 @@ function renderFinishedBatchInfo(
           ${formatDecimal(summary.totalWeight, 3)}
         </div>
         <div class="summary-label">
-          累計 kg
+          ${completed ? '總重量 kg' : '累計 kg'}
         </div>
       </div>
 
@@ -2747,7 +2803,7 @@ function renderFinishedBatchInfo(
           ${Number(summary.totalQuantity || 0).toLocaleString('zh-TW')}
         </div>
         <div class="summary-label">
-          累計 pcs
+          ${completed ? '總數量 pcs' : '累計 pcs'}
         </div>
       </div>
     `;
