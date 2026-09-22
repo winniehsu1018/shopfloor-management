@@ -367,6 +367,65 @@
       padding: 0;
     }
 
+  
+    .finished-info {
+      background: #f7f8fa;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 18px;
+      line-height: 1.8;
+      font-size: 15px;
+    }
+
+    .finished-info strong {
+      display: inline-block;
+      min-width: 82px;
+    }
+
+    .summary-box {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 14px 0 18px;
+    }
+
+    .summary-item {
+      background: #f7f8fa;
+      border-radius: 10px;
+      padding: 10px 6px;
+      text-align: center;
+    }
+
+    .summary-value {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .summary-label {
+      margin-top: 3px;
+      font-size: 12px;
+      color: #777;
+    }
+
+    .history-title {
+      margin: 24px 0 10px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .report-history-card {
+      border: 1px solid #e4e7eb;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    #finishedApp {
+      display: none;
+    }
+
   </style>
 </head>
 
@@ -799,6 +858,147 @@
 </div>
 
 
+
+<div
+  id="finishedApp"
+  class="container"
+>
+  <div class="card">
+
+    <h1>⚖️ 成品回報</h1>
+
+    <div class="subtitle">
+      掃描加工回報單 QR Code 後，回報本次實際秤重結果
+    </div>
+
+    <div class="user-box">
+      回報人員：
+      <span
+        id="finishedEmployeeName"
+        class="user-name"
+      >-</span>
+    </div>
+
+    <div
+      id="finishedMessageBox"
+      class="message"
+    ></div>
+
+    <div
+      id="finishedBatchInfo"
+      class="finished-info"
+    >
+      載入批次資料中...
+    </div>
+
+    <div
+      id="finishedSummary"
+      class="summary-box"
+      style="display:none;"
+    ></div>
+
+    <form
+      id="finishedReportForm"
+      autocomplete="off"
+    >
+      <div class="form-group">
+        <label for="finishedReportDate">
+          日期
+          <span class="required">*</span>
+        </label>
+
+        <input
+          type="date"
+          id="finishedReportDate"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="finishedTotalWeight">
+          總重 kg
+          <span class="required">*</span>
+        </label>
+
+        <input
+          type="number"
+          id="finishedTotalWeight"
+          min="0.001"
+          step="0.001"
+          inputmode="decimal"
+          placeholder="例如：21.350"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="finishedUnitWeight">
+          單顆重量 g
+          <span class="required">*</span>
+        </label>
+
+        <input
+          type="number"
+          id="finishedUnitWeight"
+          min="0.0001"
+          step="0.0001"
+          inputmode="decimal"
+          placeholder="請輸入本次實際成品單顆重量"
+          required
+        >
+
+        <div class="field-hint">
+          請依本次成品實際秤重填寫，不自動帶入毛胚單重。
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="finishedCalculatedQty">
+          換算數量 pcs
+        </label>
+
+        <input
+          type="text"
+          id="finishedCalculatedQty"
+          readonly
+          placeholder="輸入總重與單顆重量後自動試算"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="finishedRemark">
+          備註
+        </label>
+
+        <textarea
+          id="finishedRemark"
+          placeholder="沒有可留白"
+        ></textarea>
+      </div>
+
+      <button
+        id="finishedSubmitBtn"
+        class="submit-btn"
+        type="submit"
+      >
+        送出成品回報
+      </button>
+    </form>
+
+    <div class="history-title">
+      本批次成品回報紀錄
+    </div>
+
+    <div id="finishedHistory">
+      <div class="empty-message">
+        尚無回報紀錄
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
 <script>
 
 // ============================================================
@@ -822,6 +1022,11 @@ let partMap = {};
 let currentRequestId = null;
 let isSubmitting = false;
 
+let currentMode = 'batch';
+let currentFinishedBatchId = '';
+let currentFinishedRequestId = null;
+let isFinishedSubmitting = false;
+
 
 // ============================================================
 // 啟動
@@ -844,6 +1049,25 @@ async function initializeApp() {
     await liff.init({
       liffId: LIFF_ID
     });
+
+    // LIFF URL 的額外 query 參數要在 liff.init() 完成後再讀取。
+    const launchParams =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    currentFinishedBatchId =
+      String(
+        launchParams.get('batchId') || ''
+      ).trim();
+
+    currentMode =
+      (
+        launchParams.get('mode') === 'finished' &&
+        currentFinishedBatchId
+      )
+        ? 'finished'
+        : 'batch';
 
     if (!liff.isLoggedIn()) {
       liff.login({
@@ -896,7 +1120,9 @@ async function initializeApp() {
 
     if (!auth.canWrite) {
       showUnauthorized(
-        '您的帳號只有讀取權限，無法建立生產批次'
+        currentMode === 'finished'
+          ? '您的帳號只有讀取權限，無法回報成品'
+          : '您的帳號只有讀取權限，無法建立生產批次'
       );
 
       return;
@@ -904,6 +1130,35 @@ async function initializeApp() {
 
     currentEmployeeName =
       auth.employeeName || '未知';
+
+    if (currentMode === 'finished') {
+      document
+        .getElementById(
+          'finishedEmployeeName'
+        )
+        .textContent =
+          currentEmployeeName;
+
+      document
+        .getElementById(
+          'loadingScreen'
+        )
+        .style.display =
+          'none';
+
+      document
+        .getElementById(
+          'finishedApp'
+        )
+        .style.display =
+          'block';
+
+      setFinishedToday();
+      bindFinishedReportEvents();
+
+      await loadFinishedReportContext();
+      return;
+    }
 
     document
       .getElementById(
@@ -972,6 +1227,13 @@ function showUnauthorized(message) {
   document
     .getElementById(
       'mainApp'
+    )
+    .style.display =
+      'none';
+
+  document
+    .getElementById(
+      'finishedApp'
     )
     .style.display =
       'none';
@@ -2213,6 +2475,514 @@ function escapeJsString(value) {
     .replace(/'/g, "\\'")
     .replace(/\r/g, '\\r')
     .replace(/\n/g, '\\n');
+}
+
+
+
+// ============================================================
+// 成品回報頁
+// ============================================================
+
+function setFinishedToday() {
+  const now = new Date();
+
+  const yyyy =
+    now.getFullYear();
+
+  const mm =
+    String(
+      now.getMonth() + 1
+    ).padStart(2, '0');
+
+  const dd =
+    String(
+      now.getDate()
+    ).padStart(2, '0');
+
+  document
+    .getElementById(
+      'finishedReportDate'
+    )
+    .value =
+      `${yyyy}-${mm}-${dd}`;
+}
+
+
+function bindFinishedReportEvents() {
+  const totalWeightEl =
+    document.getElementById(
+      'finishedTotalWeight'
+    );
+
+  const unitWeightEl =
+    document.getElementById(
+      'finishedUnitWeight'
+    );
+
+  totalWeightEl.addEventListener(
+    'input',
+    updateFinishedCalculatedQty
+  );
+
+  unitWeightEl.addEventListener(
+    'input',
+    updateFinishedCalculatedQty
+  );
+
+  document
+    .getElementById(
+      'finishedReportForm'
+    )
+    .addEventListener(
+      'submit',
+      submitFinishedReport
+    );
+}
+
+
+function updateFinishedCalculatedQty() {
+  const totalWeight =
+    Number(
+      document
+        .getElementById(
+          'finishedTotalWeight'
+        )
+        .value
+    );
+
+  const unitWeight =
+    Number(
+      document
+        .getElementById(
+          'finishedUnitWeight'
+        )
+        .value
+    );
+
+  const output =
+    document.getElementById(
+      'finishedCalculatedQty'
+    );
+
+  if (
+    !Number.isFinite(totalWeight) ||
+    totalWeight <= 0 ||
+    !Number.isFinite(unitWeight) ||
+    unitWeight <= 0
+  ) {
+    output.value = '';
+    return;
+  }
+
+  const qty =
+    Math.round(
+      totalWeight * 1000 /
+      unitWeight
+    );
+
+  output.value =
+    qty.toLocaleString('zh-TW');
+}
+
+
+async function loadFinishedReportContext() {
+  if (!currentFinishedBatchId) {
+    showFinishedMessage(
+      'QR Code 缺少批次 ID',
+      'error'
+    );
+    return;
+  }
+
+  try {
+    const result =
+      await apiGet(
+        'getFinishedReportContext',
+        {
+          userId:
+            currentUserId,
+          batchId:
+            currentFinishedBatchId
+        }
+      );
+
+    if (!result.success) {
+      throw new Error(
+        result.message ||
+        '無法讀取批次資料'
+      );
+    }
+
+    renderFinishedBatchInfo(
+      result.batch,
+      result.summary
+    );
+
+    renderFinishedHistory(
+      result.reports || []
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    showFinishedMessage(
+      error.message ||
+      '讀取成品回報資料失敗',
+      'error'
+    );
+  }
+}
+
+
+function renderFinishedBatchInfo(
+  batch,
+  summary
+) {
+  const lotLabel =
+    String(
+      batch.supplier || ''
+    ).trim() === '緯丞'
+      ? '緯丞批號'
+      : '廠商批號';
+
+  document
+    .getElementById(
+      'finishedBatchInfo'
+    )
+    .innerHTML =
+      `
+        <div>
+          <strong>件號：</strong>
+          ${escapeHtml(batch.partNo || '-')}
+        </div>
+        <div>
+          <strong>${escapeHtml(lotLabel)}：</strong>
+          ${escapeHtml(batch.materialLotNo || '-')}
+        </div>
+        <div>
+          <strong>批次 ID：</strong>
+          ${escapeHtml(batch.batchId || '-')}
+        </div>
+        <div>
+          <strong>供料方：</strong>
+          ${escapeHtml(batch.supplier || '-')}
+        </div>
+        <div>
+          <strong>清洗日期：</strong>
+          ${escapeHtml(batch.washDate || '-')}
+        </div>
+      `;
+
+  const summaryEl =
+    document.getElementById(
+      'finishedSummary'
+    );
+
+  summaryEl.style.display =
+    'grid';
+
+  summaryEl.innerHTML =
+    `
+      <div class="summary-item">
+        <div class="summary-value">
+          ${Number(summary.reportCount || 0)}
+        </div>
+        <div class="summary-label">
+          已回報次數
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-value">
+          ${formatDecimal(summary.totalWeight, 3)}
+        </div>
+        <div class="summary-label">
+          累計 kg
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div class="summary-value">
+          ${Number(summary.totalQuantity || 0).toLocaleString('zh-TW')}
+        </div>
+        <div class="summary-label">
+          累計 pcs
+        </div>
+      </div>
+    `;
+}
+
+
+function renderFinishedHistory(reports) {
+  const box =
+    document.getElementById(
+      'finishedHistory'
+    );
+
+  if (!reports.length) {
+    box.innerHTML =
+      '<div class="empty-message">尚無回報紀錄</div>';
+    return;
+  }
+
+  box.innerHTML =
+    reports
+      .slice()
+      .reverse()
+      .map(function(item) {
+        return `
+          <div class="report-history-card">
+            <strong>
+              第 ${Number(item.reportNo || 0)} 次
+            </strong>
+            ・${escapeHtml(item.date || '-')}
+            <br>
+            總重：
+            ${formatDecimal(item.totalWeight, 3)} kg
+            ・單顆：
+            ${formatDecimal(item.unitWeight, 4)} g
+            <br>
+            換算：
+            ${Number(item.quantity || 0).toLocaleString('zh-TW')} pcs
+            ${
+              item.remark
+                ? `<br>備註：${escapeHtml(item.remark)}`
+                : ''
+            }
+            <br>
+            <span style="color:#777;">
+              ${escapeHtml(item.reporter || '')}
+              ${
+                item.reportTime
+                  ? '・' + escapeHtml(item.reportTime)
+                  : ''
+              }
+            </span>
+          </div>
+        `;
+      })
+      .join('');
+}
+
+
+async function submitFinishedReport(event) {
+  event.preventDefault();
+
+  if (isFinishedSubmitting) {
+    return;
+  }
+
+  clearFinishedMessage();
+
+  const reportDate =
+    document
+      .getElementById(
+        'finishedReportDate'
+      )
+      .value;
+
+  const totalWeight =
+    Number(
+      document
+        .getElementById(
+          'finishedTotalWeight'
+        )
+        .value
+    );
+
+  const unitWeight =
+    Number(
+      document
+        .getElementById(
+          'finishedUnitWeight'
+        )
+        .value
+    );
+
+  const remark =
+    document
+      .getElementById(
+        'finishedRemark'
+      )
+      .value
+      .trim();
+
+  if (!reportDate) {
+    showFinishedMessage(
+      '請選擇日期',
+      'error'
+    );
+    return;
+  }
+
+  if (
+    !Number.isFinite(totalWeight) ||
+    totalWeight <= 0
+  ) {
+    showFinishedMessage(
+      '請輸入正確的總重 kg',
+      'error'
+    );
+    return;
+  }
+
+  if (
+    !Number.isFinite(unitWeight) ||
+    unitWeight <= 0
+  ) {
+    showFinishedMessage(
+      '請輸入本次實際成品單顆重量 g',
+      'error'
+    );
+    return;
+  }
+
+  if (!currentFinishedRequestId) {
+    currentFinishedRequestId =
+      generateRequestId();
+  }
+
+  const button =
+    document.getElementById(
+      'finishedSubmitBtn'
+    );
+
+  try {
+    isFinishedSubmitting = true;
+    button.disabled = true;
+    button.textContent =
+      '送出中...';
+
+    const result =
+      await apiPost({
+        action:
+          'createFinishedReport',
+        userId:
+          currentUserId,
+        batchId:
+          currentFinishedBatchId,
+        reportDate:
+          reportDate,
+        totalWeight:
+          totalWeight,
+        unitWeight:
+          unitWeight,
+        remark:
+          remark,
+        requestId:
+          currentFinishedRequestId
+      });
+
+    if (!result.success) {
+      throw new Error(
+        result.message ||
+        '成品回報失敗'
+      );
+    }
+
+    showFinishedMessage(
+      result.duplicate
+        ? `第 ${result.reportNo} 次回報已存在，未重複寫入`
+        : `第 ${result.reportNo} 次成品回報成功，換算 ${Number(result.quantity || 0).toLocaleString('zh-TW')} pcs`,
+      'success'
+    );
+
+    if (!result.duplicate) {
+      document
+        .getElementById(
+          'finishedTotalWeight'
+        )
+        .value = '';
+
+      document
+        .getElementById(
+          'finishedUnitWeight'
+        )
+        .value = '';
+
+      document
+        .getElementById(
+          'finishedCalculatedQty'
+        )
+        .value = '';
+
+      document
+        .getElementById(
+          'finishedRemark'
+        )
+        .value = '';
+    }
+
+    currentFinishedRequestId = null;
+
+    await loadFinishedReportContext();
+
+  } catch (error) {
+    console.error(error);
+
+    showFinishedMessage(
+      error.message ||
+      '成品回報失敗',
+      'error'
+    );
+
+  } finally {
+    isFinishedSubmitting = false;
+    button.disabled = false;
+    button.textContent =
+      '送出成品回報';
+  }
+}
+
+
+function showFinishedMessage(
+  text,
+  type
+) {
+  const box =
+    document.getElementById(
+      'finishedMessageBox'
+    );
+
+  box.textContent = text;
+  box.className =
+    'message ' + type;
+
+  box.scrollIntoView({
+    behavior: 'smooth',
+    block: 'nearest'
+  });
+}
+
+
+function clearFinishedMessage() {
+  const box =
+    document.getElementById(
+      'finishedMessageBox'
+    );
+
+  box.textContent = '';
+  box.className = 'message';
+}
+
+
+function formatDecimal(
+  value,
+  digits
+) {
+  const n = Number(value || 0);
+
+  if (!Number.isFinite(n)) {
+    return '0';
+  }
+
+  return n.toLocaleString(
+    'zh-TW',
+    {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: digits
+    }
+  );
 }
 
 
