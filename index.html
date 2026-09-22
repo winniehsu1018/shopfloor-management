@@ -666,6 +666,9 @@
             id="partSearch"
             placeholder="輸入關鍵字搜尋件號..."
             autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
             required
           >
           <div
@@ -1714,18 +1717,9 @@ function renderBatchPartDropdown_() {
     div.dataset.partNo =
       partNo;
 
-    const customer =
-      partMap[partNo] &&
-      partMap[partNo].customer
-        ? String(
-            partMap[partNo].customer
-          ).trim()
-        : '';
-
+    // 下拉清單只顯示件號；客戶仍在選取後自動帶入客戶欄位。
     div.textContent =
-      customer
-        ? partNo + '　' + customer
-        : partNo;
+      partNo;
 
     div.addEventListener(
       'mousedown',
