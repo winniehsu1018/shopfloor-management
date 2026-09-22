@@ -2126,6 +2126,14 @@ async function regenerateReport(
   const originalText =
     button.textContent;
 
+  // 在使用者點擊當下先建立分頁，
+  // 避免等待 GAS 產 PDF 後被瀏覽器判定為彈出視窗。
+  const pdfWindow =
+    window.open(
+      '',
+      '_blank'
+    );
+
   try {
     button.disabled = true;
     button.textContent =
@@ -2151,23 +2159,36 @@ async function regenerateReport(
 
     if (!result.pdfUrl) {
       throw new Error(
-        'PDF 已執行產生，但沒有取得檔案網址'
+        'PDF 已產生，但沒有取得短效開啟網址'
       );
     }
 
     showMessage(
-      `批次 ${batchId} 的加工回報單已產生`,
+      result.reused
+        ? `批次 ${batchId} 已開啟既有加工回報單`
+        : `批次 ${batchId} 的加工回報單已產生`,
       'success'
     );
 
-    // 直接開啟新產生的 PDF
-    window.open(
-      result.pdfUrl,
-      '_blank'
-    );
+    if (pdfWindow) {
+      pdfWindow.location.href =
+        result.pdfUrl;
+    } else {
+      window.open(
+        result.pdfUrl,
+        '_blank'
+      );
+    }
 
   } catch (error) {
     console.error(error);
+
+    if (
+      pdfWindow &&
+      !pdfWindow.closed
+    ) {
+      pdfWindow.close();
+    }
 
     showMessage(
       error.message ||
