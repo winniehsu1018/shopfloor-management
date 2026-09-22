@@ -3007,9 +3007,7 @@ async function apiGet(
   Object
     .entries(params)
     .forEach(
-      function(
-        [key, value]
-      ) {
+      function([key, value]) {
         url.searchParams.set(
           key,
           value
@@ -3017,24 +3015,126 @@ async function apiGet(
       }
     );
 
-  const response =
-    await fetch(
-      url.toString(),
-      {
-        method: 'GET',
-        cache: 'no-store'
-      }
-    );
+  const requestUrl =
+    url.toString();
 
-  if (!response.ok) {
+  // GAS 偶發 404 / 暫時性連線異常：
+  // 第 1 次失敗 -> 1 秒後重試
+  // 第 2 次失敗 -> 2 秒後重試
+  // 第 3 次仍失敗才顯示錯誤
+  const MAX_ATTEMPTS = 3;
+  const RETRY_DELAYS = [1000, 2000];
+
+  for (
+    let attempt = 1;
+    attempt <= MAX_ATTEMPTS;
+    attempt++
+  ) {
+    let response;
+
+    try {
+      response =
+        await fetch(
+          requestUrl,
+          {
+            method: 'GET',
+            cache: 'no-store',
+            redirect: 'follow'
+          }
+        );
+    } catch (networkError) {
+      if (attempt < MAX_ATTEMPTS) {
+        const delay =
+          RETRY_DELAYS[attempt - 1] || 2000;
+
+        console.warn(
+          `[apiGet] ${action} 網路異常，第 ${attempt} 次失敗，${delay / 1000} 秒後重試`
+        );
+
+        await new Promise(
+          resolve =>
+            setTimeout(resolve, delay)
+        );
+
+        continue;
+      }
+
+      throw new Error(
+        `API ${action} 網路連線失敗` +
+        `｜嘗試 ${attempt}/${MAX_ATTEMPTS}` +
+        `｜${networkError.message || networkError}`
+      );
+    }
+
+    if (response.ok) {
+      const rawText =
+        await response.text();
+
+      try {
+        return JSON.parse(rawText);
+      } catch (jsonError) {
+        throw new Error(
+          `API ${action} 回傳格式異常` +
+          (rawText
+            ? `｜${rawText.replace(/\s+/g, ' ').trim().slice(0, 300)}`
+            : '｜無回應內容')
+        );
+      }
+    }
+
+    // 只對可能是暫時性的錯誤自動重試。
+    // 404 是目前實際遇到的 GAS 偶發狀況；
+    // 429 / 5xx 也適合短暫等待後重試。
+    const retryable =
+      response.status === 404 ||
+      response.status === 429 ||
+      response.status >= 500;
+
+    if (
+      retryable &&
+      attempt < MAX_ATTEMPTS
+    ) {
+      const delay =
+        RETRY_DELAYS[attempt - 1] || 2000;
+
+      console.warn(
+        `[apiGet] ${action} HTTP ${response.status}，` +
+        `第 ${attempt} 次失敗，${delay / 1000} 秒後重試`
+      );
+
+      await new Promise(
+        resolve =>
+          setTimeout(resolve, delay)
+      );
+
+      continue;
+    }
+
+    const responseText =
+      await response
+        .text()
+        .catch(() => '');
+
+    const detail =
+      responseText
+        ? responseText
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 300)
+        : '無回應內容';
+
     throw new Error(
-      `HTTP ${response.status}`
+      `API ${action} 失敗` +
+      `｜HTTP ${response.status}` +
+      `｜嘗試 ${attempt}/${MAX_ATTEMPTS}` +
+      `｜${detail}`
     );
   }
 
-  return await response.json();
+  throw new Error(
+    `API ${action} 呼叫失敗`
+  );
 }
-
 
 
 // ============================================================
