@@ -361,6 +361,57 @@
       line-height: 1.6;
     }
 
+
+    /* =========================================================
+       表單輸入區字體統一為 CNC 生產日報
+       CNC：Arial, sans-serif；label / input / select / textarea = 16px
+       ========================================================= */
+    #batchForm,
+    #batchForm label,
+    #batchForm input,
+    #batchForm textarea,
+    #batchForm select,
+    #finishedReportForm,
+    #finishedReportForm label,
+    #finishedReportForm input,
+    #finishedReportForm textarea,
+    #finishedReportForm select {
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+    }
+
+
+    /* 件號搜尋下拉選單：比照 CNC 生產日報 */
+    .part-search-wrap { position: relative; }
+
+    .part-dropdown-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      max-height: 180px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-top: none;
+      z-index: 1000;
+      display: none;
+      border-radius: 0 0 5px 5px;
+      box-shadow: 0 4px 6px rgba(0,0,0,.1);
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+    }
+
+    .part-dropdown-item {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .part-dropdown-item:hover,
+    .part-dropdown-item.active {
+      background-color: #e0e0e0;
+    }
+
     #mainApp { display: none; }
   
     /* =========================================================
@@ -609,17 +660,19 @@
           <span class="required">*</span>
         </label>
 
-        <input
-          type="text"
-          id="partSearch"
-          list="partList"
-          placeholder="可從清單選擇，也可手動輸入"
-          required
-        >
-
-        <datalist
-          id="partList"
-        ></datalist>
+        <div class="part-search-wrap">
+          <input
+            type="text"
+            id="partSearch"
+            placeholder="輸入關鍵字搜尋件號..."
+            autocomplete="off"
+            required
+          >
+          <div
+            id="partDropdown"
+            class="part-dropdown-list"
+          ></div>
+        </div>
 
         <div
           id="partHint"
@@ -1491,36 +1544,15 @@ async function loadParts() {
 
   partMap = {};
 
-  const list =
-    document.getElementById(
-      'partList'
-    );
-
-  list.innerHTML = '';
-
   (data.parts || [])
     .forEach(function(item) {
       partMap[
         item.partNo
       ] = item;
-
-      const option =
-        document.createElement(
-          'option'
-        );
-
-      option.value =
-        item.partNo;
-
-      if (item.customer) {
-        option.label =
-          item.customer;
-      }
-
-      list.appendChild(
-        option
-      );
     });
+
+  // 自訂下拉選單不預先塞 DOM；
+  // 使用者輸入關鍵字時才依 partMap 即時篩選。
 }
 
 
@@ -1531,14 +1563,226 @@ async function loadParts() {
 // 新件號：允許手動輸入客戶
 // ============================================================
 
-document
-  .getElementById(
-    'partSearch'
-  )
-  .addEventListener(
-    'input',
-    updatePartAndCustomer
+const batchPartInput =
+  document.getElementById('partSearch');
+
+const batchPartDropdown =
+  document.getElementById('partDropdown');
+
+let batchPartCurrentFocus = -1;
+
+batchPartInput.addEventListener(
+  'input',
+  function() {
+    updatePartAndCustomer();
+    renderBatchPartDropdown_();
+  }
+);
+
+batchPartInput.addEventListener(
+  'focus',
+  function() {
+    renderBatchPartDropdown_();
+  }
+);
+
+batchPartInput.addEventListener(
+  'keydown',
+  function(e) {
+    const items =
+      batchPartDropdown
+        .getElementsByClassName(
+          'part-dropdown-item'
+        );
+
+    if (e.key === 'ArrowDown') {
+      if (items.length > 0) {
+        e.preventDefault();
+        batchPartCurrentFocus++;
+
+        if (
+          batchPartCurrentFocus >=
+          items.length
+        ) {
+          batchPartCurrentFocus = 0;
+        }
+
+        setBatchPartActive_(
+          items,
+          batchPartCurrentFocus
+        );
+      }
+
+    } else if (e.key === 'ArrowUp') {
+      if (items.length > 0) {
+        e.preventDefault();
+        batchPartCurrentFocus--;
+
+        if (batchPartCurrentFocus < 0) {
+          batchPartCurrentFocus =
+            items.length - 1;
+        }
+
+        setBatchPartActive_(
+          items,
+          batchPartCurrentFocus
+        );
+      }
+
+    } else if (e.key === 'Enter') {
+      if (
+        batchPartDropdown.style.display ===
+          'block' &&
+        batchPartCurrentFocus > -1 &&
+        items[batchPartCurrentFocus]
+      ) {
+        e.preventDefault();
+
+        selectBatchPart_(
+          items[
+            batchPartCurrentFocus
+          ].dataset.partNo
+        );
+      }
+    }
+  }
+);
+
+batchPartInput.addEventListener(
+  'blur',
+  function() {
+    setTimeout(function() {
+      batchPartDropdown.style.display =
+        'none';
+    }, 200);
+  }
+);
+
+document.addEventListener(
+  'click',
+  function(e) {
+    if (
+      !batchPartInput.contains(e.target) &&
+      !batchPartDropdown.contains(e.target)
+    ) {
+      batchPartDropdown.style.display =
+        'none';
+    }
+  }
+);
+
+function renderBatchPartDropdown_() {
+  const raw =
+    batchPartInput.value.trim();
+
+  const keyword =
+    raw
+      .toLowerCase()
+      .replace(/[-\s]/g, '');
+
+  batchPartDropdown.innerHTML = '';
+  batchPartCurrentFocus = -1;
+
+  const partNos =
+    Object.keys(partMap);
+
+  // 與 CNC 日報相同：輸入關鍵字後顯示包含該關鍵字的件號。
+  // 點進欄位但尚未輸入時，先顯示完整清單，方便手機直接點選。
+  const filtered =
+    partNos.filter(function(partNo) {
+      if (!keyword) return true;
+
+      return partNo
+        .toLowerCase()
+        .replace(/[-\s]/g, '')
+        .includes(keyword);
+    });
+
+  if (filtered.length === 0) {
+    batchPartDropdown.style.display =
+      'none';
+    return;
+  }
+
+  filtered.forEach(function(partNo) {
+    const div =
+      document.createElement('div');
+
+    div.className =
+      'part-dropdown-item';
+
+    div.dataset.partNo =
+      partNo;
+
+    const customer =
+      partMap[partNo] &&
+      partMap[partNo].customer
+        ? String(
+            partMap[partNo].customer
+          ).trim()
+        : '';
+
+    div.textContent =
+      customer
+        ? partNo + '　' + customer
+        : partNo;
+
+    div.addEventListener(
+      'mousedown',
+      function(e) {
+        e.preventDefault();
+
+        selectBatchPart_(
+          partNo
+        );
+      }
+    );
+
+    batchPartDropdown.appendChild(
+      div
+    );
+  });
+
+  batchPartDropdown.style.display =
+    'block';
+}
+
+function selectBatchPart_(partNo) {
+  batchPartInput.value =
+    partNo;
+
+  batchPartDropdown.style.display =
+    'none';
+
+  batchPartCurrentFocus = -1;
+
+  updatePartAndCustomer();
+}
+
+function setBatchPartActive_(
+  items,
+  index
+) {
+  for (
+    let i = 0;
+    i < items.length;
+    i++
+  ) {
+    items[i].classList.remove(
+      'active'
+    );
+  }
+
+  if (!items[index]) return;
+
+  items[index].classList.add(
+    'active'
   );
+
+  items[index].scrollIntoView({
+    block: 'nearest'
+  });
+}
 
 
 function updatePartAndCustomer() {
@@ -2467,7 +2711,7 @@ async function regenerateReport(
       window.open(result.pdfUrl, '_blank');
     }
 
-    // PDF 已成功產生後，在同一批次下方顯示「分享 PDF」測試按鈕。
+    // PDF 已成功產生後，在同一批次下方顯示「分享 PDF」按鈕。
     // 分享的是實際 PDF File，不是 Drive 網址。
     installPdfShareTestButton_(
       button,
@@ -2495,7 +2739,7 @@ async function regenerateReport(
 
 
 // ============================================================
-// 手機原生分享 PDF（測試版）
+// 手機原生分享 PDF
 // ============================================================
 
 function installPdfShareTestButton_(
@@ -2509,7 +2753,7 @@ function installPdfShareTestButton_(
   if (!actions) return;
 
   let shareButton =
-    actions.querySelector('.share-pdf-test-btn');
+    actions.querySelector('.share-pdf-btn');
 
   if (!shareButton) {
     shareButton =
@@ -2517,7 +2761,7 @@ function installPdfShareTestButton_(
 
     shareButton.type = 'button';
     shareButton.className =
-      'regen-btn share-pdf-test-btn';
+      'regen-btn share-pdf-btn';
 
     shareButton.style.marginTop = '8px';
     shareButton.style.borderColor = '#16a34a';
