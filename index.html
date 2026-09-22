@@ -2467,6 +2467,14 @@ async function regenerateReport(
       window.open(result.pdfUrl, '_blank');
     }
 
+    // PDF 已成功產生後，在同一批次下方顯示「分享 PDF」測試按鈕。
+    // 分享的是實際 PDF File，不是 Drive 網址。
+    installPdfShareTestButton_(
+      button,
+      batchId,
+      flowCardCopies
+    );
+
   } catch (error) {
     console.error(error);
 
@@ -2481,6 +2489,164 @@ async function regenerateReport(
   } finally {
     button.disabled = false;
     button.textContent = originalText;
+  }
+}
+
+
+
+// ============================================================
+// 手機原生分享 PDF（測試版）
+// ============================================================
+
+function installPdfShareTestButton_(
+  sourceButton,
+  batchId,
+  flowCardCopies
+) {
+  const actions =
+    sourceButton.closest('.batch-actions');
+
+  if (!actions) return;
+
+  let shareButton =
+    actions.querySelector('.share-pdf-test-btn');
+
+  if (!shareButton) {
+    shareButton =
+      document.createElement('button');
+
+    shareButton.type = 'button';
+    shareButton.className =
+      'regen-btn share-pdf-test-btn';
+
+    shareButton.style.marginTop = '8px';
+    shareButton.style.borderColor = '#16a34a';
+    shareButton.style.color = '#15803d';
+    shareButton.textContent = '📤 分享 PDF 到 LINE';
+
+    actions.appendChild(shareButton);
+  }
+
+  shareButton.onclick = function() {
+    sharePdfFile_(
+      batchId,
+      flowCardCopies,
+      shareButton
+    );
+  };
+}
+
+
+async function sharePdfFile_(
+  batchId,
+  flowCardCopies,
+  button
+) {
+  if (!navigator.share) {
+    showMessage(
+      '此手機 / LINE 內建瀏覽器不支援系統分享功能。',
+      'error'
+    );
+    return;
+  }
+
+  const originalText =
+    button.textContent;
+
+  try {
+    button.disabled = true;
+    button.textContent = '準備 PDF...';
+
+    const result = await apiGet(
+      'getPdfShareData',
+      {
+        userId: currentUserId,
+        batchId: batchId,
+        flowCardCopies: flowCardCopies
+      }
+    );
+
+    if (!result.success) {
+      throw new Error(
+        result.message || '無法取得 PDF'
+      );
+    }
+
+    if (!result.base64) {
+      throw new Error(
+        '沒有取得 PDF 檔案內容'
+      );
+    }
+
+    const binary =
+      atob(result.base64);
+
+    const bytes =
+      new Uint8Array(binary.length);
+
+    for (
+      let i = 0;
+      i < binary.length;
+      i++
+    ) {
+      bytes[i] =
+        binary.charCodeAt(i);
+    }
+
+    const pdfFile =
+      new File(
+        [bytes],
+        result.fileName ||
+          (batchId + '_加工回報單.pdf'),
+        {
+          type:
+            result.mimeType ||
+            'application/pdf'
+        }
+      );
+
+    if (
+      navigator.canShare &&
+      !navigator.canShare({
+        files: [pdfFile]
+      })
+    ) {
+      throw new Error(
+        '這個手機目前支援分享，但不支援直接分享 PDF 檔案。'
+      );
+    }
+
+    await navigator.share({
+      files: [pdfFile],
+      title: '加工回報單'
+    });
+
+    showMessage(
+      '已叫出手機分享功能；若選 LINE 並送出，聊天室中會收到真正的 PDF 檔案。',
+      'success'
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    // 使用者自己關閉分享視窗，不當成系統錯誤。
+    if (
+      error &&
+      error.name === 'AbortError'
+    ) {
+      return;
+    }
+
+    showMessage(
+      error.message ||
+        '此裝置目前無法直接分享 PDF',
+      'error'
+    );
+
+  } finally {
+    button.disabled = false;
+    button.textContent =
+      originalText;
   }
 }
 
