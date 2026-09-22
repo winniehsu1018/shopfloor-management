@@ -3339,6 +3339,26 @@ function renderFinishedHistory(reports) {
 }
 
 
+function showBatchCompleteConfirm_(batchId) {
+  return new Promise(function(resolve) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box';
+    const panel = document.createElement('div');
+    panel.style.cssText = 'width:min(420px,100%);background:#fff;border-radius:18px;padding:24px;box-sizing:border-box;box-shadow:0 12px 36px rgba(0,0,0,.24);font-family:Arial,sans-serif;color:#202124';
+    const safeBatchId = String(batchId || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    panel.innerHTML = `<div style="font-size:20px;font-weight:700;margin-bottom:14px">確認批次完成</div><div style="font-size:16px;line-height:1.65;margin-bottom:12px">確認批次 <strong>${safeBatchId}</strong> 已全部加工完成？</div><div style="font-size:15px;line-height:1.65;color:#5f6368;margin-bottom:22px">系統會先儲存本次成品回報，再將此批次改為「待結算」，並自動加總完工重量與最終數量。</div><div style="display:flex;gap:12px"><button type="button" data-cancel style="flex:1;min-height:48px;border:1px solid #c7c7c7;border-radius:12px;background:#fff;color:#333;font-size:16px;font-weight:700">取消</button><button type="button" data-confirm style="flex:1;min-height:48px;border:0;border-radius:12px;background:#188038;color:#fff;font-size:16px;font-weight:700">確認完成</button></div>`;
+    let settled = false;
+    function finish(value) { if (settled) return; settled=true; document.removeEventListener('keydown',onKeyDown); if (overlay.parentNode) overlay.parentNode.removeChild(overlay); resolve(value); }
+    function onKeyDown(event) { if (event.key === 'Escape') finish(false); }
+    panel.querySelector('[data-cancel]').addEventListener('click',function(){finish(false);});
+    panel.querySelector('[data-confirm]').addEventListener('click',function(){finish(true);});
+    overlay.addEventListener('click',function(event){if(event.target===overlay) finish(false);});
+    document.addEventListener('keydown',onKeyDown);
+    overlay.appendChild(panel); document.body.appendChild(overlay); panel.querySelector('[data-confirm]').focus();
+  });
+}
+
+
 async function submitFinishedReport(
   event,
   completeBatch = false
@@ -3353,10 +3373,8 @@ async function submitFinishedReport(
 
   if (completeBatch) {
     const confirmed =
-      window.confirm(
-        `確認批次 ${currentFinishedBatchId} 已全部加工完成？\n\n` +
-        `系統會先儲存本次成品回報，再將此批次改為「待結算」，` +
-        `並自動加總完工重量與最終數量。`
+      await showBatchCompleteConfirm_(
+        currentFinishedBatchId
       );
 
     if (!confirmed) {
