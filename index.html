@@ -2422,88 +2422,161 @@ async function regenerateReport(
   batchId,
   button
 ) {
-  if (!batchId || !button) {
-    return;
-  }
+  if (!batchId || !button) return;
 
-  const originalText =
-    button.textContent;
+  // 先讓員工選擇流程卡總張數（1～10，預設 1）。
+  // PDF 空白分頁在「確認」按鈕的 click 事件中直接建立，避免被瀏覽器擋掉。
+  const choice = await chooseFlowCardCopies_();
+  if (!choice) return;
 
-  // 在使用者點擊當下先建立分頁，
-  // 避免等待 GAS 產 PDF 後被瀏覽器判定為彈出視窗。
-  const pdfWindow =
-    window.open(
-      '',
-      '_blank'
-    );
+  const flowCardCopies = choice.copies;
+  const pdfWindow = choice.pdfWindow;
+  const originalText = button.textContent;
 
   try {
     button.disabled = true;
-    button.textContent =
-      '產生中...';
+    button.textContent = '產生中...';
 
-    const result =
-      await apiGet(
-        'regenerateReport',
-        {
-          userId:
-            currentUserId,
-          batchId:
-            batchId
-        }
-      );
+    const result = await apiGet(
+      'regenerateReport',
+      {
+        userId: currentUserId,
+        batchId: batchId,
+        flowCardCopies: flowCardCopies
+      }
+    );
 
     if (!result.success) {
-      throw new Error(
-        result.message ||
-        '產生失敗'
-      );
+      throw new Error(result.message || '產生失敗');
     }
 
     if (!result.pdfUrl) {
-      throw new Error(
-        'PDF 已產生，但沒有取得短效開啟網址'
-      );
+      throw new Error('PDF 已產生，但沒有取得短效開啟網址');
     }
 
     showMessage(
       result.reused
-        ? `批次 ${batchId} 已開啟既有加工回報單`
-        : `批次 ${batchId} 的加工回報單已產生`,
+        ? `批次 ${batchId} 已開啟既有加工回報單（${flowCardCopies} 張流程卡）`
+        : `批次 ${batchId} 的加工回報單已產生（${flowCardCopies} 張流程卡）`,
       'success'
     );
 
-    if (pdfWindow) {
-      pdfWindow.location.href =
-        result.pdfUrl;
+    if (pdfWindow && !pdfWindow.closed) {
+      pdfWindow.location.href = result.pdfUrl;
     } else {
-      window.open(
-        result.pdfUrl,
-        '_blank'
-      );
+      window.open(result.pdfUrl, '_blank');
     }
 
   } catch (error) {
     console.error(error);
 
-    if (
-      pdfWindow &&
-      !pdfWindow.closed
-    ) {
+    if (pdfWindow && !pdfWindow.closed) {
       pdfWindow.close();
     }
 
     showMessage(
-      error.message ||
-      '產生加工回報單失敗',
+      error.message || '產生加工回報單失敗',
       'error'
     );
-
   } finally {
     button.disabled = false;
-    button.textContent =
-      originalText;
+    button.textContent = originalText;
   }
+}
+
+
+// ============================================================
+// 流程卡張數選擇視窗
+// 預設 1 張，最少 1、最多 10。
+// ============================================================
+function chooseFlowCardCopies_() {
+  return new Promise(function(resolve) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = [
+      'position:fixed',
+      'inset:0',
+      'z-index:99999',
+      'background:rgba(0,0,0,.45)',
+      'display:flex',
+      'align-items:center',
+      'justify-content:center',
+      'padding:20px'
+    ].join(';');
+
+    const panel = document.createElement('div');
+    panel.style.cssText = [
+      'width:min(360px,100%)',
+      'background:#fff',
+      'border-radius:16px',
+      'padding:22px',
+      'box-shadow:0 12px 36px rgba(0,0,0,.22)',
+      'text-align:center'
+    ].join(';');
+
+    panel.innerHTML = `
+      <div style="font-size:20px;font-weight:700;margin-bottom:8px;">
+        產生加工回報單
+      </div>
+      <div style="font-size:14px;color:#666;margin-bottom:18px;">
+        產品流程卡需要幾張？
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:8px;">
+        <button type="button" data-minus
+          style="width:48px;height:48px;border:1px solid #ccc;border-radius:12px;background:#f7f7f7;font-size:28px;line-height:1;">−</button>
+        <div data-count style="min-width:54px;font-size:32px;font-weight:700;">1</div>
+        <button type="button" data-plus
+          style="width:48px;height:48px;border:1px solid #ccc;border-radius:12px;background:#f7f7f7;font-size:28px;line-height:1;">＋</button>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:20px;">
+        1～10 張；系統會自動產生卡號
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button type="button" data-cancel
+          style="flex:1;height:44px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:16px;">取消</button>
+        <button type="button" data-confirm
+          style="flex:1;height:44px;border:0;border-radius:10px;background:#1a73e8;color:#fff;font-size:16px;font-weight:700;">產生 PDF</button>
+      </div>
+    `;
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    let count = 1;
+    const countEl = panel.querySelector('[data-count]');
+
+    function render() {
+      countEl.textContent = String(count);
+    }
+
+    function close(result) {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      resolve(result);
+    }
+
+    panel.querySelector('[data-minus]').addEventListener('click', function() {
+      count = Math.max(1, count - 1);
+      render();
+    });
+
+    panel.querySelector('[data-plus]').addEventListener('click', function() {
+      count = Math.min(10, count + 1);
+      render();
+    });
+
+    panel.querySelector('[data-cancel]').addEventListener('click', function() {
+      close(null);
+    });
+
+    panel.querySelector('[data-confirm]').addEventListener('click', function() {
+      // 必須在使用者 click 當下建立新分頁，避免手機瀏覽器阻擋 PDF。
+      const pdfWindow = window.open('', '_blank');
+      close({ copies: count, pdfWindow: pdfWindow });
+    });
+
+    overlay.addEventListener('click', function(event) {
+      if (event.target === overlay) close(null);
+    });
+  });
 }
 
 
