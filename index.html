@@ -159,6 +159,34 @@
       cursor: not-allowed;
     }
 
+    .complete-batch-btn {
+      width: 100%;
+      border: 2px solid #1f9d55;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 16px;
+      font-weight: 700;
+      background: #fff;
+      color: #187a43;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .complete-batch-btn:disabled {
+      border-color: #aab2b9;
+      color: #8b949c;
+      background: #f1f3f5;
+      cursor: not-allowed;
+    }
+
+    .complete-batch-hint {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.5;
+      margin-top: 7px;
+      text-align: center;
+    }
+
     .pdf-btn {
       display: none;
       width: 100%;
@@ -983,6 +1011,19 @@
       >
         送出成品回報
       </button>
+
+      <button
+        id="finishedCompleteBtn"
+        class="complete-batch-btn"
+        type="button"
+        onclick="submitFinishedReport(event, true)"
+      >
+        ✅ 送出本次回報＋批次完成
+      </button>
+
+      <div class="complete-batch-hint">
+        僅在確認本批材料已全部加工完成時使用。完成後批次將進入「待結算」。
+      </div>
     </form>
 
     <div class="history-title">
@@ -2765,7 +2806,10 @@ function renderFinishedHistory(reports) {
 }
 
 
-async function submitFinishedReport(event) {
+async function submitFinishedReport(
+  event,
+  completeBatch = false
+) {
   event.preventDefault();
 
   if (isFinishedSubmitting) {
@@ -2773,6 +2817,19 @@ async function submitFinishedReport(event) {
   }
 
   clearFinishedMessage();
+
+  if (completeBatch) {
+    const confirmed =
+      window.confirm(
+        `確認批次 ${currentFinishedBatchId} 已全部加工完成？\n\n` +
+        `系統會先儲存本次成品回報，再將此批次改為「待結算」，` +
+        `並自動加總完工重量與最終數量。`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+  }
 
   const reportDate =
     document
@@ -2847,11 +2904,23 @@ async function submitFinishedReport(event) {
       'finishedSubmitBtn'
     );
 
+  const completeButton =
+    document.getElementById(
+      'finishedCompleteBtn'
+    );
+
   try {
     isFinishedSubmitting = true;
     button.disabled = true;
-    button.textContent =
-      '送出中...';
+    completeButton.disabled = true;
+
+    if (completeBatch) {
+      completeButton.textContent =
+        '批次完成處理中...';
+    } else {
+      button.textContent =
+        '送出中...';
+    }
 
     const result =
       await apiPost({
@@ -2869,6 +2938,8 @@ async function submitFinishedReport(event) {
           unitWeight,
         remark:
           remark,
+        completeBatch:
+          completeBatch,
         requestId:
           currentFinishedRequestId
       });
@@ -2880,10 +2951,19 @@ async function submitFinishedReport(event) {
       );
     }
 
+    const completionSummary =
+      result.completionSummary || null;
+
+    const completedText =
+      result.batchCompleted &&
+      completionSummary
+        ? `；批次已完成 → ${completionSummary.status}，累計 ${Number(completionSummary.totalWeight || 0).toLocaleString('zh-TW')} kg / ${Number(completionSummary.totalQty || 0).toLocaleString('zh-TW')} pcs`
+        : '';
+
     showFinishedMessage(
       result.duplicate
-        ? `第 ${result.reportNo} 次回報已存在，未重複寫入`
-        : `第 ${result.reportNo} 次成品回報成功，換算 ${Number(result.quantity || 0).toLocaleString('zh-TW')} pcs`,
+        ? `第 ${result.reportNo} 次回報已存在，未重複寫入${completedText}`
+        : `第 ${result.reportNo} 次成品回報成功，換算 ${Number(result.quantity || 0).toLocaleString('zh-TW')} pcs${completedText}`,
       'success'
     );
 
@@ -2929,8 +3009,13 @@ async function submitFinishedReport(event) {
   } finally {
     isFinishedSubmitting = false;
     button.disabled = false;
+    completeButton.disabled = false;
+
     button.textContent =
       '送出成品回報';
+
+    completeButton.textContent =
+      '✅ 送出本次回報＋批次完成';
   }
 }
 
