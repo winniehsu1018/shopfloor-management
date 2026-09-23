@@ -2307,12 +2307,33 @@ async function submitBatch(event) {
     batchWasCreated = true;
     createdBatchId = String(result.batchId || '').trim();
 
+    // ========================================================
+    // 批次一旦確認建立成功，主表單立即淨空。
+    // PDF 尚未完成也不阻擋員工開始輸入下一筆。
+    // 所有 PDF 所需資料已在前面存入 payload / flowCardCopies，
+    // 因此清空畫面不會影響本次 PDF。
+    // ========================================================
+    currentRequestId = null;
+    resetEntryFields();
+    if (flowCardCopiesInput) flowCardCopiesInput.value = '1';
+
     showMessage(
       result.duplicate
-        ? `此筆資料已經建立過，批次 ID：${createdBatchId}。正在準備加工回報單...`
-        : `建立成功！批次 ID：${createdBatchId}。正在產生加工回報單...`,
+        ? `此筆資料已經建立過，批次 ID：${createdBatchId}。PDF 正在另一分頁準備中，可繼續輸入下一筆。`
+        : `建立成功！批次 ID：${createdBatchId}。PDF 正在另一分頁準備中，可繼續輸入下一筆。`,
       'success'
     );
+
+    // 今日批次列表背景更新，不等待它完成。
+    loadTodayBatches().catch(function(err) {
+      console.warn('今日批次列表更新失敗：', err);
+    });
+
+    // 嘗試把操作焦點留在主頁。是否真的保持背景分頁，最終仍由瀏覽器決定。
+    try {
+      if (autoPdfWindow && !autoPdfWindow.closed) autoPdfWindow.blur();
+      window.focus();
+    } catch (_) {}
 
     button.textContent = 'PDF 產生中...';
 
@@ -2334,21 +2355,24 @@ async function submitBatch(event) {
       throw new Error('批次已建立，但 PDF 沒有取得開啟網址');
     }
 
-    currentRequestId = null;
-    resetEntryFields();
-    if (flowCardCopiesInput) flowCardCopiesInput.value = '1';
-
-    await loadTodayBatches();
-
     showMessage(
-      `批次 ${createdBatchId} 已建立，PDF 已完成（${flowCardCopies} 張流程卡）`,
+      `批次 ${createdBatchId} 已建立，PDF 已完成（${flowCardCopies} 張流程卡）。可繼續輸入下一筆。`,
       'success'
     );
 
     if (autoPdfWindow && !autoPdfWindow.closed) {
-      autoPdfWindow.location.href = pdfResult.pdfUrl;
+      autoPdfWindow.location.replace(pdfResult.pdfUrl);
+      try {
+        autoPdfWindow.blur();
+        window.focus();
+      } catch (_) {}
     } else {
-      window.open(pdfResult.pdfUrl, '_blank');
+      // 若瀏覽器擋住預先建立的分頁，才退回一般新分頁開啟。
+      const fallbackPdfWindow = window.open(pdfResult.pdfUrl, '_blank');
+      try {
+        if (fallbackPdfWindow) fallbackPdfWindow.blur();
+        window.focus();
+      } catch (_) {}
     }
 
   } catch (error) {
@@ -2359,11 +2383,11 @@ async function submitBatch(event) {
     }
 
     if (batchWasCreated) {
-      // 重要：PDF 失敗不代表批次建立失敗，避免員工誤建第二筆。
-      currentRequestId = null;
-      resetEntryFields();
-      if (flowCardCopiesInput) flowCardCopiesInput.value = '1';
-      try { await loadTodayBatches(); } catch (_) {}
+      // 重要：批次成功後表單早已淨空，員工可能正在填下一筆。
+      // PDF 失敗時絕對不可再次 resetEntryFields()，避免清掉下一筆資料。
+      loadTodayBatches().catch(function(err) {
+        console.warn('今日批次列表更新失敗：', err);
+      });
 
       showMessage(
         `批次 ${createdBatchId} 已建立，但 PDF 產生失敗：${error.message || '請稍後從今日已建立批次重新產生'}`,
