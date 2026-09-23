@@ -2417,8 +2417,9 @@ async function generateCreatedBatchPdfInBackground_(batchId, flowCardCopies, pdf
       throw new Error('PDF 沒有取得開啟網址');
     }
 
-    // PDF 完成後只更新提示訊息，不碰主表單按鈕。
-    showMessage(
+    // PDF 完成後只更新上方提示訊息：
+    // 不捲動頁面、不搶焦點、不碰主表單按鈕，避免打斷下一筆輸入。
+    showMessageNoScroll(
       `批次 ${batchId} 的 PDF 已完成（${flowCardCopies} 張流程卡）。`,
       'success'
     );
@@ -2444,8 +2445,8 @@ async function generateCreatedBatchPdfInBackground_(batchId, flowCardCopies, pdf
       try { pdfWindow.close(); } catch (_) {}
     }
 
-    // PDF 失敗只顯示提示；不改按鈕、不清空表單。
-    showMessage(
+    // PDF 失敗只更新提示；不捲動、不搶焦點、不改按鈕、不清空表單。
+    showMessageNoScroll(
       `批次 ${batchId} 已建立，但 PDF 產生失敗：${error.message || '請稍後從今日已建立批次重新產生'}`,
       'error'
     );
@@ -3973,6 +3974,24 @@ function showMessage(
     behavior: 'smooth',
     block: 'nearest'
   });
+}
+
+
+// 背景工作專用訊息：只更新內容，不改變目前頁面位置或輸入焦點。
+function showMessageNoScroll(
+  text,
+  type
+) {
+  const box =
+    document.getElementById(
+      'messageBox'
+    );
+
+  box.textContent =
+    text;
+
+  box.className =
+    'message ' + type;
 }
 
 
