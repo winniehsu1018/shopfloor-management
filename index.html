@@ -2305,7 +2305,17 @@ async function submitBatch(event) {
     }
 
     batchWasCreated = true;
-    createdBatchId = String(result.batchId || '').trim();
+    createdBatchId = String(
+      result.batchId ||
+      (result.batch && result.batch.batchId) ||
+      ''
+    ).trim();
+
+    // 批次已建立卻沒有取得批次 ID 時，不可送出空 batchId 去產 PDF。
+    // 正式 GAS 正常會回傳 result.batchId；同時兼容 result.batch.batchId。
+    if (!createdBatchId) {
+      throw new Error('批次已建立，但伺服器沒有回傳批次 ID，請從「今日已建立批次」重新產生 PDF');
+    }
 
     // ========================================================
     // 批次一旦確認建立成功，主表單立即淨空。
