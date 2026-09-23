@@ -2335,7 +2335,11 @@ async function submitBatch(event) {
       window.focus();
     } catch (_) {}
 
-    button.textContent = 'PDF 產生中...';
+    // 批次資料已經成功寫入，到這裡就解除主表單的送出鎖定。
+    // PDF 後續產生不再占用 submitBtn，員工可立即輸入並送出下一筆。
+    isSubmitting = false;
+    button.disabled = false;
+    button.textContent = '建立生產批次並產生 PDF';
 
     // 批次成功後，直接以建立表單選好的張數產生 PDF；不再跳第二次張數選擇。
     const pdfResult = await apiGet(
@@ -2401,12 +2405,14 @@ async function submitBatch(event) {
     }
 
   } finally {
-    isSubmitting = false;
-
-    button.disabled = false;
-
-    button.textContent =
-      '建立生產批次並產生 PDF';
+    // 只有「批次尚未建立成功」時，才由這次請求負責解除按鈕。
+    // 批次一旦建立成功，按鈕早已先解除，且員工可能已送出下一筆；
+    // 舊 PDF 工作不可再去改動下一筆送出的按鈕狀態。
+    if (!batchWasCreated) {
+      isSubmitting = false;
+      button.disabled = false;
+      button.textContent = '建立生產批次並產生 PDF';
+    }
   }
 }
 
