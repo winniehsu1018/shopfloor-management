@@ -905,12 +905,29 @@
       </div>
 
 
+      <div class="form-group">
+        <label for="flowCardCopies">
+          產品流程卡總張數
+        </label>
+
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button type="button" onclick="adjustEntryFlowCardCopies_(-1)"
+            style="width:46px;height:44px;border:1px solid #ccc;border-radius:8px;background:#f7f7f7;font-size:24px;">−</button>
+          <input type="number" id="flowCardCopies" min="1" max="10" step="1" value="1" inputmode="numeric"
+            style="width:82px;text-align:center;font-weight:700;" aria-label="產品流程卡總張數">
+          <button type="button" onclick="adjustEntryFlowCardCopies_(1)"
+            style="width:46px;height:44px;border:1px solid #ccc;border-radius:8px;background:#f7f7f7;font-size:24px;">＋</button>
+        </div>
+        <div class="hint">1～10 張；第 1 張包含在加工回報單內。</div>
+      </div>
+
+
       <button
         id="submitBtn"
         class="submit-btn"
         type="submit"
       >
-        建立生產批次
+        建立生產批次並產生 PDF
       </button>
 
     </form>
@@ -1944,6 +1961,28 @@ function updateCalculatedWeight() {
 
 
 // ============================================================
+// 建立批次時的流程卡張數
+// ============================================================
+function adjustEntryFlowCardCopies_(delta) {
+  const input = document.getElementById('flowCardCopies');
+  if (!input) return;
+  let value = parseInt(input.value || '1', 10);
+  if (!Number.isFinite(value)) value = 1;
+  value = Math.max(1, Math.min(10, value + delta));
+  input.value = String(value);
+}
+
+function getEntryFlowCardCopies_() {
+  const input = document.getElementById('flowCardCopies');
+  let value = parseInt(input ? input.value : '1', 10);
+  if (!Number.isFinite(value)) value = 1;
+  value = Math.max(1, Math.min(10, value));
+  if (input) input.value = String(value);
+  return value;
+}
+
+
+// ============================================================
 // Form submit
 // ============================================================
 
@@ -2172,6 +2211,19 @@ async function submitBatch(event) {
     return;
   }
 
+  const flowCardCopies = getEntryFlowCardCopies_();
+
+  // 在使用者按「建立」的當下先開空白頁，避免 iPhone / LINE 瀏覽器
+  // 在等待 GAS 回應後把 PDF 新分頁判定為彈出視窗而封鎖。
+  const pdfWindow = window.open('', '_blank');
+  if (pdfWindow) {
+    try {
+      pdfWindow.document.title = 'PDF 產生中';
+      pdfWindow.document.body.innerHTML =
+        '<div style="font-family:Arial,sans-serif;padding:24px;text-align:center;">加工回報單產生中，請稍候…</div>';
+    } catch (_) {}
+  }
+
   if (!currentRequestId) {
     currentRequestId =
       generateRequestId();
@@ -2264,16 +2316,53 @@ async function submitBatch(event) {
       );
     }
 
-    if (result.duplicate) {
+    const batchId = result.batchId;
+
+    // 批次已經成功寫入後，再接著產生 PDF。
+    // PDF 失敗不會把「批次建立成功」誤判成建立失敗。
+    button.textContent = '批次已建立，PDF 產生中...';
+
+    let pdfError = null;
+
+    try {
+      const pdfResult = await apiGet(
+        'regenerateReport',
+        {
+          userId: currentUserId,
+          batchId: batchId,
+          flowCardCopies: flowCardCopies
+        }
+      );
+
+      if (!pdfResult.success || !pdfResult.pdfUrl) {
+        throw new Error(
+          pdfResult.message ||
+          'PDF 產生失敗'
+        );
+      }
+
       showMessage(
-        `此筆資料已經建立過，批次 ID：${result.batchId}`,
+        `${result.duplicate ? '此筆批次已存在' : '建立成功'}！批次 ID：${batchId}；加工回報單已準備完成（${flowCardCopies} 張流程卡）。`,
         'success'
       );
 
-    } else {
+      if (pdfWindow && !pdfWindow.closed) {
+        pdfWindow.location.href = pdfResult.pdfUrl;
+      } else {
+        window.open(pdfResult.pdfUrl, '_blank');
+      }
+
+    } catch (pdfErr) {
+      console.error('PDF generation failed:', pdfErr);
+      pdfError = pdfErr;
+
+      if (pdfWindow && !pdfWindow.closed) {
+        pdfWindow.close();
+      }
+
       showMessage(
-        `建立成功！批次 ID：${result.batchId}`,
-        'success'
+        `✅ 批次 ${batchId} 已建立；⚠️ PDF 產生失敗，可從「今日已建立批次」重新產生。`,
+        'error'
       );
     }
 
@@ -2281,10 +2370,18 @@ async function submitBatch(event) {
 
     resetEntryFields();
 
+    // 下一筆預設仍為 1 張流程卡。
+    const flowInput = document.getElementById('flowCardCopies');
+    if (flowInput) flowInput.value = '1';
+
     await loadTodayBatches();
 
   } catch (error) {
     console.error(error);
+
+    if (typeof pdfWindow !== 'undefined' && pdfWindow && !pdfWindow.closed) {
+      pdfWindow.close();
+    }
 
     showMessage(
       error.message ||
@@ -2298,7 +2395,7 @@ async function submitBatch(event) {
     button.disabled = false;
 
     button.textContent =
-      '建立生產批次';
+      '建立生產批次並產生 PDF';
   }
 }
 
