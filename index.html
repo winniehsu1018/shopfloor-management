@@ -2341,43 +2341,19 @@ async function submitBatch(event) {
     button.disabled = false;
     button.textContent = '建立生產批次並產生 PDF';
 
-    // 批次成功後，直接以建立表單選好的張數產生 PDF；不再跳第二次張數選擇。
-    const pdfResult = await apiGet(
-      'regenerateReport',
-      {
-        userId: currentUserId,
-        batchId: createdBatchId,
-        flowCardCopies: flowCardCopies
-      }
+    // ========================================================
+    // PDF 工作完全脫離本次表單送出流程。
+    // 這裡「不 await」，因此主表單不會再被 PDF 工作鎖住。
+    // generateCreatedBatchPdfInBackground_ 也完全不操作 submitBtn。
+    // ========================================================
+    generateCreatedBatchPdfInBackground_(
+      createdBatchId,
+      flowCardCopies,
+      autoPdfWindow
     );
 
-    if (!pdfResult.success) {
-      throw new Error(pdfResult.message || '批次已建立，但 PDF 產生失敗');
-    }
-
-    if (!pdfResult.pdfUrl) {
-      throw new Error('批次已建立，但 PDF 沒有取得開啟網址');
-    }
-
-    showMessage(
-      `批次 ${createdBatchId} 已建立，PDF 已完成（${flowCardCopies} 張流程卡）。可繼續輸入下一筆。`,
-      'success'
-    );
-
-    if (autoPdfWindow && !autoPdfWindow.closed) {
-      autoPdfWindow.location.replace(pdfResult.pdfUrl);
-      try {
-        autoPdfWindow.blur();
-        window.focus();
-      } catch (_) {}
-    } else {
-      // 若瀏覽器擋住預先建立的分頁，才退回一般新分頁開啟。
-      const fallbackPdfWindow = window.open(pdfResult.pdfUrl, '_blank');
-      try {
-        if (fallbackPdfWindow) fallbackPdfWindow.blur();
-        window.focus();
-      } catch (_) {}
-    }
+    // 到這裡本次「建立批次」流程就結束。
+    // 員工可以立刻輸入並送出下一筆。
 
   } catch (error) {
     console.error(error);
@@ -2413,6 +2389,66 @@ async function submitBatch(event) {
       button.disabled = false;
       button.textContent = '建立生產批次並產生 PDF';
     }
+  }
+}
+
+
+// ============================================================
+// 新建批次後的 PDF 背景工作
+// 重要：此函式不得操作 isSubmitting / submitBtn / resetEntryFields。
+// 因此前一筆 PDF 無論成功或失敗，都不會鎖住或清掉下一筆表單。
+// ============================================================
+async function generateCreatedBatchPdfInBackground_(batchId, flowCardCopies, pdfWindow) {
+  try {
+    const pdfResult = await apiGet(
+      'regenerateReport',
+      {
+        userId: currentUserId,
+        batchId: batchId,
+        flowCardCopies: flowCardCopies
+      }
+    );
+
+    if (!pdfResult.success) {
+      throw new Error(pdfResult.message || 'PDF 產生失敗');
+    }
+
+    if (!pdfResult.pdfUrl) {
+      throw new Error('PDF 沒有取得開啟網址');
+    }
+
+    // PDF 完成後只更新提示訊息，不碰主表單按鈕。
+    showMessage(
+      `批次 ${batchId} 的 PDF 已完成（${flowCardCopies} 張流程卡）。`,
+      'success'
+    );
+
+    if (pdfWindow && !pdfWindow.closed) {
+      pdfWindow.location.replace(pdfResult.pdfUrl);
+      try {
+        pdfWindow.blur();
+        window.focus();
+      } catch (_) {}
+    } else {
+      const fallbackPdfWindow = window.open(pdfResult.pdfUrl, '_blank');
+      try {
+        if (fallbackPdfWindow) fallbackPdfWindow.blur();
+        window.focus();
+      } catch (_) {}
+    }
+
+  } catch (error) {
+    console.error('背景 PDF 產生失敗：', error);
+
+    if (pdfWindow && !pdfWindow.closed) {
+      try { pdfWindow.close(); } catch (_) {}
+    }
+
+    // PDF 失敗只顯示提示；不改按鈕、不清空表單。
+    showMessage(
+      `批次 ${batchId} 已建立，但 PDF 產生失敗：${error.message || '請稍後從今日已建立批次重新產生'}`,
+      'error'
+    );
   }
 }
 
