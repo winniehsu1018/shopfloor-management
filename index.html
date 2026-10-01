@@ -781,7 +781,7 @@
             type="number"
             id="boxWeight"
             min="0"
-            step="0.001"
+            step="0.0001"
             inputmode="decimal"
             placeholder="例如：20"
           >
@@ -798,9 +798,9 @@
           type="number"
           id="tailWeight"
           min="0"
-          step="0.001"
+          step="0.0001"
           inputmode="decimal"
-          placeholder="例如：4.350"
+          placeholder="例如：4.3500"
         >
       </div>
 
@@ -813,7 +813,7 @@
         <input
           type="number"
           id="calculatedWeight"
-          step="0.001"
+          step="0.0001"
           readonly
           placeholder="系統自動計算"
         >
@@ -1948,7 +1948,7 @@ function updateCalculatedWeight() {
     )
     .value =
       total > 0
-        ? total.toFixed(3)
+        ? total.toFixed(4)
         : '';
 }
 
@@ -2076,9 +2076,12 @@ async function submitBatch(event) {
         .value || 0
     );
 
-  const weight =
+  const rawWeight =
     boxCount * boxWeight +
     tailWeight;
+
+  const weight =
+    Math.round((rawWeight + Number.EPSILON) * 10000) / 10000;
 
   const workOrderNo =
     document
@@ -2668,7 +2671,7 @@ function renderTodayBatches(
         const weightText =
           batch.arrivalWeight !== '' &&
           batch.arrivalWeight !== null
-            ? `${escapeHtml(batch.arrivalWeight)} kg`
+            ? `${formatDecimal(batch.arrivalWeight, 4)} kg`
             : '-';
 
         return `
@@ -3395,6 +3398,10 @@ function renderFinishedBatchInfo(
         <div>
           <strong>供料方：</strong>
           ${escapeHtml(batch.supplier || '-')}
+        </div>
+        <div>
+          <strong>來料總重：</strong>
+          ${formatDecimal(batch.arrivalWeight, 4)} kg
         </div>
         <div>
           <strong>清洗日期：</strong>
