@@ -3315,44 +3315,26 @@ async function loadFinishedReportContext() {
         'finishedHistory'
       );
 
-    if (result.batchCompleted === true) {
-      // 批次完成後：QR 僅供查詢最終總計。
-      // 不再顯示輸入欄位，也不顯示逐筆回報歷程。
-      formEl.style.display = 'none';
-
-      if (historyTitle) {
-        historyTitle.style.display =
-          'none';
-      }
-
-      if (historyEl) {
-        historyEl.style.display =
-          'none';
-      }
-
-      showFinishedMessage(
-        '✅ 此批次已完成，以下為最終成品回報總計。',
-        'success'
-      );
-
-      return;
-    }
-
-    formEl.style.display = 'block';
+    // 已完成批次禁止新增回報，但仍顯示逐筆歷史紀錄供查詢。
+    const isCompleted = result.batchCompleted === true;
+    formEl.style.display = isCompleted ? 'none' : 'block';
 
     if (historyTitle) {
-      historyTitle.style.display =
-        'block';
+      historyTitle.style.display = 'block';
     }
 
     if (historyEl) {
-      historyEl.style.display =
-        'block';
+      historyEl.style.display = 'block';
     }
 
-    renderFinishedHistory(
-      result.reports || []
-    );
+    renderFinishedHistory(result.reports || []);
+
+    if (isCompleted) {
+      showFinishedMessage(
+        '✅ 此批次已完成，以下為最終成品回報總計及逐筆紀錄（僅供查詢）。',
+        'success'
+      );
+    }
 
   } catch (error) {
     console.error(error);
