@@ -3303,44 +3303,22 @@ async function loadFinishedReportContext() {
         'finishedHistory'
       );
 
-    if (result.batchCompleted === true) {
-      // 批次完成後：QR 僅供查詢最終總計。
-      // 不再顯示輸入欄位，也不顯示逐筆回報歷程。
-      formEl.style.display = 'none';
+    const completed = result.batchCompleted === true ||
+      ['待結算', '待出貨', '已出完'].includes(String(result.batch?.status || '').trim());
 
-      if (historyTitle) {
-        historyTitle.style.display =
-          'none';
-      }
+    // 已完成批次只鎖定輸入表單；歷史紀錄永久可查。
+    formEl.style.display = completed ? 'none' : 'block';
+    if (historyTitle) historyTitle.style.display = 'block';
+    if (historyEl) historyEl.style.display = 'block';
 
-      if (historyEl) {
-        historyEl.style.display =
-          'none';
-      }
+    renderFinishedHistory(result.reports || []);
 
+    if (completed) {
       showFinishedMessage(
-        '✅ 此批次已完成，以下為最終成品回報總計。',
+        '✅ 此批次已完成，以下可查看最終總計與逐筆回報紀錄（唯讀）。',
         'success'
       );
-
-      return;
     }
-
-    formEl.style.display = 'block';
-
-    if (historyTitle) {
-      historyTitle.style.display =
-        'block';
-    }
-
-    if (historyEl) {
-      historyEl.style.display =
-        'block';
-    }
-
-    renderFinishedHistory(
-      result.reports || []
-    );
 
   } catch (error) {
     console.error(error);
