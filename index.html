@@ -3223,23 +3223,11 @@ function bindFinishedReportEvents() {
 
 
 function updateFinishedCalculatedQty() {
-  const totalWeight =
-    Number(
-      document
-        .getElementById(
-          'finishedTotalWeight'
-        )
-        .value
-    );
-
-  const unitWeight =
-    Number(
-      document
-        .getElementById(
-          'finishedUnitWeight'
-        )
-        .value
-    );
+  const weightRaw = document.getElementById('finishedTotalWeight').value.trim();
+  const unitRaw = document.getElementById('finishedUnitWeight').value.trim();
+  const completionOnly = completeBatch && weightRaw === '' && unitRaw === '';
+  const totalWeight = weightRaw === '' ? NaN : Number(weightRaw);
+  const unitWeight = unitRaw === '' ? NaN : Number(unitRaw);
 
   const output =
     document.getElementById(
@@ -3315,26 +3303,44 @@ async function loadFinishedReportContext() {
         'finishedHistory'
       );
 
-    // 已完成批次禁止新增回報，但仍顯示逐筆歷史紀錄供查詢。
-    const isCompleted = result.batchCompleted === true;
-    formEl.style.display = isCompleted ? 'none' : 'block';
+    if (result.batchCompleted === true) {
+      // 批次完成後：QR 僅供查詢最終總計。
+      // 不再顯示輸入欄位，也不顯示逐筆回報歷程。
+      formEl.style.display = 'none';
+
+      if (historyTitle) {
+        historyTitle.style.display =
+          'none';
+      }
+
+      if (historyEl) {
+        historyEl.style.display =
+          'none';
+      }
+
+      showFinishedMessage(
+        '✅ 此批次已完成，以下為最終成品回報總計。',
+        'success'
+      );
+
+      return;
+    }
+
+    formEl.style.display = 'block';
 
     if (historyTitle) {
-      historyTitle.style.display = 'block';
+      historyTitle.style.display =
+        'block';
     }
 
     if (historyEl) {
-      historyEl.style.display = 'block';
+      historyEl.style.display =
+        'block';
     }
 
-    renderFinishedHistory(result.reports || []);
-
-    if (isCompleted) {
-      showFinishedMessage(
-        '✅ 此批次已完成，以下為最終成品回報總計及逐筆紀錄（僅供查詢）。',
-        'success'
-      );
-    }
+    renderFinishedHistory(
+      result.reports || []
+    );
 
   } catch (error) {
     console.error(error);
@@ -3574,8 +3580,8 @@ async function submitFinishedReport(
   }
 
   if (
-    !Number.isFinite(totalWeight) ||
-    totalWeight <= 0
+    !completionOnly &&
+    (!Number.isFinite(totalWeight) || totalWeight <= 0)
   ) {
     showFinishedMessage(
       '請輸入正確的總重 kg',
@@ -3585,8 +3591,8 @@ async function submitFinishedReport(
   }
 
   if (
-    !Number.isFinite(unitWeight) ||
-    unitWeight <= 0
+    !completionOnly &&
+    (!Number.isFinite(unitWeight) || unitWeight <= 0)
   ) {
     showFinishedMessage(
       '請輸入本次實際成品單顆重量 g',
@@ -3626,7 +3632,7 @@ async function submitFinishedReport(
     const result =
       await apiPost({
         action:
-          'createFinishedReport',
+          completionOnly ? 'completeFinishedBatchOnly' : 'createFinishedReport',
         userId:
           currentUserId,
         batchId:
@@ -3662,9 +3668,11 @@ async function submitFinishedReport(
         : '';
 
     showFinishedMessage(
-      result.duplicate
-        ? `第 ${result.reportNo} 次回報已存在，未重複寫入${completedText}`
-        : `第 ${result.reportNo} 次成品回報成功，換算 ${Number(result.quantity || 0).toLocaleString('zh-TW')} pcs${completedText}`,
+      completionOnly
+        ? `僅完成批次成功，沒有新增成品回報${completedText}`
+        : (result.duplicate
+          ? `第 ${result.reportNo} 次回報已存在，未重複寫入${completedText}`
+          : `第 ${result.reportNo} 次成品回報成功，換算 ${Number(result.quantity || 0).toLocaleString('zh-TW')} pcs${completedText}`),
       'success'
     );
 
