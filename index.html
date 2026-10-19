@@ -505,6 +505,22 @@
       display: none;
     }
 
+
+    /* 退料結案與今日批次分開呈現；只調整畫面，不變動結案邏輯 */
+    .return-section { margin-top:32px; border:2px solid #d6bca7; border-radius:15px; overflow:hidden; background:#fffaf6; }
+    .return-heading { display:flex; align-items:center; gap:13px; padding:17px 18px; background:#f3e6da; border-bottom:1px solid #e2cbbb; }
+    .return-heading-icon { flex:none; display:grid; place-items:center; width:40px; height:40px; border-radius:12px; background:#744d31; color:white; font-size:25px; font-weight:700; }
+    .return-heading h2 { margin:0 0 4px; color:#633f28; font-size:20px; }
+    .return-heading p { margin:0; color:#745d4d; font-size:13px; line-height:1.5; }
+    .return-content { padding:18px; }
+    .return-label { display:block; font-size:15px; font-weight:700; color:#46392e; margin-bottom:9px; }
+    .return-batch-input { display:block; width:100%; padding:13px 14px; border:1px solid #c9b8aa; border-radius:9px; background:white; font-size:16px; }
+    .return-search-btn { width:100%; margin-top:11px; padding:13px; background:#744d31; color:#fff; border:0; border-radius:9px; font-size:16px; font-weight:700; cursor:pointer; }
+    .return-note { margin:11px 0 0; color:#786a5f; font-size:13px; line-height:1.6; }
+    .return-result { margin-top:12px; font-size:14px; overflow-wrap:anywhere; }
+    .return-result:empty { display:none; }
+    @media(max-width:600px) { .return-heading { padding:14px; } .return-heading h2 { font-size:18px; } .return-content { padding:14px; } }
+
   </style>
 </head>
 
@@ -940,20 +956,30 @@
         </button>
       </div>
 
-      <div style="border:1px solid #dce4ea;border-radius:12px;padding:14px;margin:12px 0;background:#fff">
-        <div style="font-weight:700;margin-bottom:8px">整批未加工退料結案</div>
-        <div style="font-size:13px;color:#677;margin-bottom:10px">可查詢任何日期建立的批次。系統會檢查 CNC 與成品回報紀錄。</div>
-        <input id="returnBatchId" type="text" placeholder="輸入完整批次 ID" style="width:100%;padding:12px;border:1px solid #ccc;border-radius:9px;font-size:16px">
-        <button type="button" onclick="startReturnBatch_()" style="width:100%;margin-top:9px;padding:12px;background:#744d31;color:white;border:0;border-radius:9px;font-weight:700">查詢並辦理退料</button>
-        <div id="returnBatchResult" style="margin-top:9px;font-size:14px"></div>
-      </div>
-
       <div id="todayBatchList">
         <div class="empty-message">
           載入中...
         </div>
       </div>
 
+    </section>
+
+    <!-- 退料結案獨立區塊：不屬於「今日已建立批次」 -->
+    <section class="return-section" aria-labelledby="returnSectionTitle">
+      <div class="return-heading">
+        <div class="return-heading-icon" aria-hidden="true">↩</div>
+        <div>
+          <h2 id="returnSectionTitle">整批退料結案</h2>
+          <p>僅適用於整批材料尚未加工、全部退回廠商的情況</p>
+        </div>
+      </div>
+      <div class="return-content">
+        <label for="returnBatchId" class="return-label">查詢原始生產批次</label>
+        <input id="returnBatchId" type="text" placeholder="輸入完整批次 ID，例如 261014-002" autocomplete="off" class="return-batch-input">
+        <button type="button" onclick="startReturnBatch_()" class="return-search-btn">查詢批次</button>
+        <p class="return-note">可查詢任何日期建立的批次。確認退料前，系統會檢查 CNC 與成品回報紀錄。</p>
+        <div id="returnBatchResult" class="return-result" role="status" aria-live="polite"></div>
+      </div>
     </section>
 
   </div>
