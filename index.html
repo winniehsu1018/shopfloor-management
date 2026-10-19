@@ -940,6 +940,14 @@
         </button>
       </div>
 
+      <div style="border:1px solid #dce4ea;border-radius:12px;padding:14px;margin:12px 0;background:#fff">
+        <div style="font-weight:700;margin-bottom:8px">整批未加工退料結案</div>
+        <div style="font-size:13px;color:#677;margin-bottom:10px">可查詢任何日期建立的批次。系統會檢查 CNC 與成品回報紀錄。</div>
+        <input id="returnBatchId" type="text" placeholder="輸入完整批次 ID" style="width:100%;padding:12px;border:1px solid #ccc;border-radius:9px;font-size:16px">
+        <button type="button" onclick="startReturnBatch_()" style="width:100%;margin-top:9px;padding:12px;background:#744d31;color:white;border:0;border-radius:9px;font-weight:700">查詢並辦理退料</button>
+        <div id="returnBatchResult" style="margin-top:9px;font-size:14px"></div>
+      </div>
+
       <div id="todayBatchList">
         <div class="empty-message">
           載入中...
@@ -2608,6 +2616,43 @@ function generateRequestId() {
 // 今日批次
 // ============================================================
 
+
+async function startReturnBatch_(prefill){
+  const idInput=document.getElementById('returnBatchId');
+  if(prefill)idInput.value=prefill;
+  const batchId=idInput.value.trim();
+  const box=document.getElementById('returnBatchResult');
+  if(!batchId){box.textContent='請輸入完整批次 ID';return;}
+  box.textContent='正在查詢批次…';
+  try{
+    const d=await apiGet('getReturnBatchCandidate',{userId:currentUserId,batchId});
+    if(!d.success)throw new Error(d.message||'查詢失敗');
+    if(d.status==='退料結案'){box.textContent='此批次已退料結案';return;}
+    if(!['待加工','加工中','生產中'].includes(d.status)){
+      box.textContent='目前狀態「'+d.status+'」不允許整批未加工退料';return;
+    }
+    box.innerHTML='';
+    const info=document.createElement('div');
+    info.textContent=`批次 ${d.batchId}｜${d.partNo}｜${d.supplier}｜${d.weight} kg｜${d.status}`;
+    const date=document.createElement('input');date.type='date';date.value=new Date().toLocaleDateString('en-CA');
+    const reason=document.createElement('textarea');reason.placeholder='請輸入退料原因（必填）';reason.rows=2;
+    const btn=document.createElement('button');btn.type='button';btn.textContent='確認整批退料結案';
+    [date,reason,btn].forEach(el=>{el.style.cssText='width:100%;margin-top:9px;padding:10px;border-radius:9px;border:1px solid #bbb;font-size:15px';box.appendChild(el)});
+    box.insertBefore(info,date);
+    btn.onclick=async()=>{
+      if(!reason.value.trim()){alert('請輸入退料原因');return;}
+      if(!confirm(`確認批次 ${d.batchId} 的全部材料未加工，且已退回廠商？\n此操作會結案並保留紀錄。`))return;
+      btn.disabled=true;btn.textContent='正在檢查與結案…';
+      try{
+        const res=await apiPost({action:'returnEntireBatch',userId:currentUserId,batchId:d.batchId,returnDate:date.value,reason:reason.value.trim()});
+        if(!res.success)throw new Error(res.message||'結案失敗');
+        box.textContent='✓ '+res.message;
+        loadTodayBatches();
+      }catch(e){box.textContent='退料未完成：'+e.message;btn.disabled=false;}
+    };
+  }catch(e){box.textContent='查詢失敗：'+e.message;}
+}
+
 async function loadTodayBatches() {
   const container =
     document.getElementById(
@@ -3223,11 +3268,23 @@ function bindFinishedReportEvents() {
 
 
 function updateFinishedCalculatedQty() {
-  const weightRaw = document.getElementById('finishedTotalWeight').value.trim();
-  const unitRaw = document.getElementById('finishedUnitWeight').value.trim();
-  const completionOnly = completeBatch && weightRaw === '' && unitRaw === '';
-  const totalWeight = weightRaw === '' ? NaN : Number(weightRaw);
-  const unitWeight = unitRaw === '' ? NaN : Number(unitRaw);
+  const totalWeight =
+    Number(
+      document
+        .getElementById(
+          'finishedTotalWeight'
+        )
+        .value
+    );
+
+  const unitWeight =
+    Number(
+      document
+        .getElementById(
+          'finishedUnitWeight'
+        )
+        .value
+    );
 
   const output =
     document.getElementById(
@@ -3303,19 +3360,23 @@ async function loadFinishedReportContext() {
         'finishedHistory'
       );
 
-    const completed = result.batchCompleted === true ||
-      ['待結算', '待出貨', '已出完'].includes(String(result.batch?.status || '').trim());
+    // 已完成批次禁止新增回報，但仍顯示逐筆歷史紀錄供查詢。
+    const isCompleted = result.batchCompleted === true;
+    formEl.style.display = isCompleted ? 'none' : 'block';
 
-    // 已完成批次只鎖定輸入表單；歷史紀錄永久可查。
-    formEl.style.display = completed ? 'none' : 'block';
-    if (historyTitle) historyTitle.style.display = 'block';
-    if (historyEl) historyEl.style.display = 'block';
+    if (historyTitle) {
+      historyTitle.style.display = 'block';
+    }
+
+    if (historyEl) {
+      historyEl.style.display = 'block';
+    }
 
     renderFinishedHistory(result.reports || []);
 
-    if (completed) {
+    if (isCompleted) {
       showFinishedMessage(
-        '✅ 此批次已完成，以下可查看最終總計與逐筆回報紀錄（唯讀）。',
+        '✅ 此批次已完成，以下為最終成品回報總計及逐筆紀錄（僅供查詢）。',
         'success'
       );
     }
@@ -3558,8 +3619,8 @@ async function submitFinishedReport(
   }
 
   if (
-    !completionOnly &&
-    (!Number.isFinite(totalWeight) || totalWeight <= 0)
+    !Number.isFinite(totalWeight) ||
+    totalWeight <= 0
   ) {
     showFinishedMessage(
       '請輸入正確的總重 kg',
@@ -3569,8 +3630,8 @@ async function submitFinishedReport(
   }
 
   if (
-    !completionOnly &&
-    (!Number.isFinite(unitWeight) || unitWeight <= 0)
+    !Number.isFinite(unitWeight) ||
+    unitWeight <= 0
   ) {
     showFinishedMessage(
       '請輸入本次實際成品單顆重量 g',
@@ -3610,7 +3671,7 @@ async function submitFinishedReport(
     const result =
       await apiPost({
         action:
-          completionOnly ? 'completeFinishedBatchOnly' : 'createFinishedReport',
+          'createFinishedReport',
         userId:
           currentUserId,
         batchId:
@@ -3646,11 +3707,9 @@ async function submitFinishedReport(
         : '';
 
     showFinishedMessage(
-      completionOnly
-        ? `僅完成批次成功，沒有新增成品回報${completedText}`
-        : (result.duplicate
-          ? `第 ${result.reportNo} 次回報已存在，未重複寫入${completedText}`
-          : `第 ${result.reportNo} 次成品回報成功，換算 ${Number(result.quantity || 0).toLocaleString('zh-TW')} pcs${completedText}`),
+      result.duplicate
+        ? `第 ${result.reportNo} 次回報已存在，未重複寫入${completedText}`
+        : `第 ${result.reportNo} 次成品回報成功，換算 ${Number(result.quantity || 0).toLocaleString('zh-TW')} pcs${completedText}`,
       'success'
     );
 
