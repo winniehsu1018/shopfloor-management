@@ -766,7 +766,13 @@
       </div>
 
 
+      <div class="form-group" id="batchModeGroup" style="display:none">
+        <label>領料登錄方式 *</label>
+        <div class="radio-group"><label class="radio-option"><input type="radio" name="inputMode" value="重量" checked>重量登錄</label><label class="radio-option"><input type="radio" name="inputMode" value="數量">數量登錄</label></div>
+      </div>
+      <div class="form-group" id="batchQtyGroup" style="display:none"><label for="inputQuantity">領料數量 pcs *</label><input id="inputQuantity" type="number" min="1" step="1" inputmode="numeric" placeholder="例如：5000"></div>
       <div
+        id="batchWeightInputs"
         style="
           display:grid;
           grid-template-columns:1fr 1fr;
@@ -1042,10 +1048,11 @@
         >
       </div>
 
+      <div class="form-group" id="finishedModeGroup" style="display:none"><label>成品回報方式 *</label><div class="radio-group"><label class="radio-option"><input type="radio" name="reportMode" value="重量" checked>重量回報</label><label class="radio-option"><input type="radio" name="reportMode" value="數量">數量回報</label></div></div>
+      <div class="form-group" id="finishedQtyGroup" style="display:none"><label for="finishedDirectQty">本次完成數量 pcs *</label><input type="number" id="finishedDirectQty" min="1" step="1" inputmode="numeric"></div>
       <div class="form-group">
         <label for="finishedTotalWeight">
-          總重 kg
-          <span class="required">*</span>
+          總重 kg <span id="finishedWeightRequired" class="required">*</span>
         </label>
 
         <input
@@ -1061,8 +1068,7 @@
 
       <div class="form-group">
         <label for="finishedUnitWeight">
-          單顆重量 g
-          <span class="required">*</span>
+          單顆重量 g <span id="finishedUnitRequired" class="required">*</span>
         </label>
 
         <input
@@ -1472,6 +1478,21 @@ function getMaterialSource() {
 }
 
 
+
+function getBatchInputMode_() {
+  return getMaterialSource() === '自購料' && document.querySelector('input[name="inputMode"]:checked')?.value === '數量' ? '數量' : '重量';
+}
+function updateBatchInputMode_() {
+  const self = getMaterialSource() === '自購料';
+  const isQty = self && getBatchInputMode_() === '數量';
+  document.getElementById('batchModeGroup').style.display = self ? '' : 'none';
+  document.getElementById('batchQtyGroup').style.display = isQty ? '' : 'none';
+  document.getElementById('inputQuantity').required = isQty;
+  document.getElementById('batchWeightInputs').style.display = isQty ? 'none' : 'grid';
+  for (const id of ['tailWeight','calculatedWeight']) document.getElementById(id).closest('.form-group').style.display = isQty ? 'none' : '';
+}
+document.querySelectorAll('input[name="inputMode"]').forEach(r=>r.addEventListener('change',updateBatchInputMode_));
+
 function updateMaterialSourceUI() {
   const materialSource =
     getMaterialSource();
@@ -1517,6 +1538,7 @@ function updateMaterialSourceUI() {
   document.getElementById('washDateLabel').textContent =
     requiredForCustomer ? '清洗日期（選填）' : '領料日期（必填）';
   washInput.required = !requiredForCustomer;
+  updateBatchInputMode_();
 
   lotInput.required = requiredForCustomer;
   arrivalInput.required = requiredForCustomer;
@@ -2218,10 +2240,10 @@ async function submitBatch(event) {
   }
 
 
-  if (
+  if (getBatchInputMode_() === '重量' && (
     !Number.isFinite(weight) ||
     weight <= 0
-  ) {
+  )) {
     showMessage(
       '入料總重量必須大於 0，請輸入箱數/單箱重量或尾數',
       'error'
@@ -2268,8 +2290,9 @@ async function submitBatch(event) {
     supplier:
       supplier,
 
-    weight:
-      weight,
+    weight: weight,
+    inputMode: getBatchInputMode_(),
+    inputQuantity: Number(document.getElementById('inputQuantity').value || 0),
 
     washDate:
       washDate,
@@ -3268,6 +3291,44 @@ function setFinishedToday() {
 }
 
 
+
+function getFinishedMode_(){return document.querySelector('input[name="reportMode"]:checked')?.value || '重量';}
+function updateFinishedMode_(){
+ const qty=getFinishedMode_()==='數量';
+ document.getElementById('finishedQtyGroup').style.display=qty?'':'none';
+ document.getElementById('finishedDirectQty').required=qty;
+ for(const id of ['finishedTotalWeight','finishedUnitWeight']) document.getElementById(id).required=!qty;
+ document.getElementById('finishedWeightRequired').style.display=qty?'none':'';
+ document.getElementById('finishedUnitRequired').style.display=qty?'none':'';
+ document.getElementById('finishedCalculatedQty').closest('.form-group').style.display=qty?'none':'';
+}
+document.querySelectorAll('input[name="reportMode"]').forEach(r=>r.addEventListener('change',updateFinishedMode_));
+
+// 輸入時即時顯示差異，僅提示、不修改員工填寫的 pcs。
+function updateQuantityWeightDifferenceNotice_(){
+  const qEl=document.getElementById('finishedDirectQty'), wEl=document.getElementById('finishedTotalWeight'), uEl=document.getElementById('finishedUnitWeight');
+  if(!qEl||!wEl||!uEl)return;
+  let notice=document.getElementById('quantityWeightDifferenceNotice');
+  if(!notice){
+    notice=document.createElement('div');notice.id='quantityWeightDifferenceNotice';
+    notice.style.cssText='display:none;margin:10px 0;padding:12px;border-radius:10px;font-size:14px;line-height:1.6';
+    qEl.closest('.form-group')?.insertAdjacentElement('afterend',notice);
+    if(!notice.isConnected)qEl.parentElement.appendChild(notice);
+  }
+  const mode=getFinishedMode_();
+  const q=Number(qEl.value),w=Number(wEl.value),u=Number(uEl.value);
+  if(mode!=='數量'||!qEl.value.trim()||!wEl.value.trim()||!uEl.value.trim()||!(q>0&&w>0&&u>0)){notice.style.display='none';return;}
+  const estimated=Math.round(w*1000/u),difference=Math.abs(estimated-q)/q*100;
+  const warning=difference>5;
+  notice.style.display='block';
+  notice.style.background=warning?'#fff3e0':'#e8f5e9';
+  notice.style.color=warning?'#9a4d00':'#176a38';
+  notice.style.border=warning?'1px solid #f0c36d':'1px solid #a7d7b4';
+  notice.textContent=(warning?'⚠️ 數量與重量換算差異超過 5%！':'✓ 數量與重量換算差異在 5% 以內。')+' 重量換算約 '+estimated.toLocaleString('zh-TW')+' pcs；輸入 '+q.toLocaleString('zh-TW')+' pcs；差異 '+difference.toFixed(1)+'%。系統仍以輸入數量為準。';
+}
+['finishedDirectQty','finishedTotalWeight','finishedUnitWeight'].forEach(id=>document.getElementById(id)?.addEventListener('input',updateQuantityWeightDifferenceNotice_));
+document.querySelectorAll('input[name="reportMode"]').forEach(el=>el.addEventListener('change',updateQuantityWeightDifferenceNotice_));
+
 function bindFinishedReportEvents() {
   const totalWeightEl =
     document.getElementById(
@@ -3373,6 +3434,10 @@ async function loadFinishedReportContext() {
       );
     }
 
+    const self = result.batch.materialSource === '自購料';
+    document.getElementById('finishedModeGroup').style.display = self ? '' : 'none';
+    if (!self) document.querySelector('input[name="reportMode"][value="重量"]').checked=true;
+    updateFinishedMode_();
     renderFinishedBatchInfo(
       result.batch,
       result.summary
@@ -3437,6 +3502,20 @@ function renderFinishedBatchInfo(
       ? '緯丞批號'
       : '廠商批號';
 
+function finishedIntakeHtmlQr_(batch) {
+  const qtyMode=String(batch.inputMode||'').trim()==='數量';
+  const qty=batch.inputQuantity;
+  const hasQty=qty!==''&&qty!==null&&qty!==undefined&&Number.isFinite(Number(qty))&&Number(qty)>0;
+  const weight=Number(batch.arrivalWeight||0);
+  const hasWeight=Number.isFinite(weight)&&weight>0;
+  if(qtyMode){
+    return `<div><strong>領料數量：</strong>${hasQty?Number(qty).toLocaleString('zh-TW')+' pcs':'尚未登錄'}</div>`+
+      (hasWeight?`<div><strong>來料總重：</strong>${formatDecimal(weight,4)} kg</div>`:'');
+  }
+  return `<div><strong>來料總重：</strong>${hasWeight?formatDecimal(weight,4)+' kg':'尚未登錄'}</div>`+
+    (hasQty?`<div><strong>領料數量：</strong>${Number(qty).toLocaleString('zh-TW')} pcs</div>`:'');
+}
+
   document
     .getElementById(
       'finishedBatchInfo'
@@ -3459,10 +3538,7 @@ function renderFinishedBatchInfo(
           <strong>供料方：</strong>
           ${escapeHtml(batch.supplier || '-')}
         </div>
-        <div>
-          <strong>來料總重：</strong>
-          ${formatDecimal(batch.arrivalWeight, 4)} kg
-        </div>
+        ${finishedIntakeHtmlQr_(batch)}
         <div>
           <strong>${batch.materialSource === '自購料' ? '領料日期' : '清洗日期'}：</strong>
           ${escapeHtml(batch.washDate || '-')}
@@ -3651,10 +3727,10 @@ async function submitFinishedReport(
     return;
   }
 
-  if (
+  if (getFinishedMode_() === '重量' && (
     !Number.isFinite(totalWeight) ||
     totalWeight <= 0
-  ) {
+  )) {
     showFinishedMessage(
       '請輸入正確的總重 kg',
       'error'
@@ -3662,15 +3738,27 @@ async function submitFinishedReport(
     return;
   }
 
-  if (
+  if (getFinishedMode_() === '重量' && (
     !Number.isFinite(unitWeight) ||
     unitWeight <= 0
-  ) {
+  )) {
     showFinishedMessage(
       '請輸入本次實際成品單顆重量 g',
       'error'
     );
     return;
+  }
+
+  // 數量回報：重量為選填；同時填寫時只提醒，不覆寫 pcs。
+  if (getFinishedMode_() === '數量') {
+    const q = Number(document.getElementById('finishedDirectQty').value);
+    const wRaw = document.getElementById('finishedTotalWeight').value.trim();
+    const uRaw = document.getElementById('finishedUnitWeight').value.trim();
+    if (!Number.isSafeInteger(q) || q <= 0) { showFinishedMessage('完成數量必須為正整數','error'); return; }
+    if ((wRaw && !(totalWeight > 0)) || (uRaw && !(unitWeight > 0))) { showFinishedMessage('選填重量若有輸入，必須大於 0','error'); return; }
+    if (wRaw && uRaw && Math.abs(Math.round(totalWeight*1000/unitWeight)-q)/q > 0.05) {
+      if (!confirm('重量換算約 '+Math.round(totalWeight*1000/unitWeight)+' pcs，與填寫的 '+q+' pcs 差異超過 5%。仍要以填寫數量送出嗎？')) return;
+    }
   }
 
   if (!currentFinishedRequestId) {
@@ -3711,10 +3799,10 @@ async function submitFinishedReport(
           currentFinishedBatchId,
         reportDate:
           reportDate,
-        totalWeight:
-          totalWeight,
-        unitWeight:
-          unitWeight,
+        totalWeight: document.getElementById('finishedTotalWeight').value,
+        reportMode: getFinishedMode_(),
+        quantity: Number(document.getElementById('finishedDirectQty').value || 0),
+        unitWeight: document.getElementById('finishedUnitWeight').value,
         remark:
           remark,
         completeBatch:
