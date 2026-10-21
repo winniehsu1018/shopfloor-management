@@ -636,7 +636,7 @@
           <span id="materialLotLabel">
             來料批次號（供應商批號）
           </span>
-          <span class="required">*</span>
+          <span id="materialLotRequiredMark" class="required">*</span>
         </label>
 
         <input
@@ -659,7 +659,7 @@
       <div class="form-group">
         <label for="arrivalDate">
           來料日期
-          <span class="required">*</span>
+          <span id="arrivalDateRequiredMark" class="required">*</span>
         </label>
 
         <input
@@ -750,13 +750,13 @@
           font-size: 16px;
         "
       >
-        🧼 清洗／入料秤重
+        <span id="washSectionTitle">🧼 清洗／入料秤重</span>
       </div>
 
 
       <div class="form-group">
         <label for="washDate">
-          清洗日期（選填）
+          <span id="washDateLabel">清洗日期（選填）</span>
         </label>
 
         <input
@@ -1506,6 +1506,23 @@ function updateMaterialSourceUI() {
       'supplierRequiredMark'
     );
 
+  const arrivalInput = document.getElementById('arrivalDate');
+  const lotMark = document.getElementById('materialLotRequiredMark');
+  const arrivalMark = document.getElementById('arrivalDateRequiredMark');
+  const requiredForCustomer = materialSource === '客供料';
+  // 只有自購料改成領料日期必填；客供料保留清洗日期選填。
+  const washInput = document.getElementById('washDate');
+  document.getElementById('washSectionTitle').textContent =
+    requiredForCustomer ? '🧼 清洗／入料秤重' : '🧼 清洗／領料秤重';
+  document.getElementById('washDateLabel').textContent =
+    requiredForCustomer ? '清洗日期（選填）' : '領料日期（必填）';
+  washInput.required = !requiredForCustomer;
+
+  lotInput.required = requiredForCustomer;
+  arrivalInput.required = requiredForCustomer;
+  if (lotMark) lotMark.style.display = requiredForCustomer ? '' : 'none';
+  if (arrivalMark) arrivalMark.style.display = requiredForCustomer ? '' : 'none';
+
   if (materialSource === '客供料') {
     lotLabel.textContent =
       '來料批次號（供應商批號）';
@@ -1543,24 +1560,24 @@ function updateMaterialSourceUI() {
       '輸入供應商批號';
 
     lotHint.textContent =
-      '請依供應商批號標示輸入。';
+      '自購料選填，若有供應商批號可輸入。';
 
     supplier.readOnly =
       false;
 
     supplier.required =
-      true;
+      false;
 
     if (supplierRequiredMark) {
       supplierRequiredMark.style.display =
-        '';
+        'none';
     }
 
     supplier.placeholder =
       '輸入供應商 / 廠商';
 
     supplierHint.textContent =
-      '自購料請輸入實際供料的供應商 / 廠商。';
+      '自購料：供料方選填，可於確認供應商後再補登。';
 
     // 切換成自購料時，避免保留原本自動帶入的客戶名稱
     supplier.value = '';
@@ -2163,7 +2180,7 @@ async function submitBatch(event) {
     return;
   }
 
-  if (!materialLotNo) {
+  if (materialSource === '客供料' && !materialLotNo) {
     showMessage(
         '請輸入來料批次號（供應商批號）',
         'error'
@@ -2178,11 +2195,17 @@ async function submitBatch(event) {
     return;
   }
 
-  if (!arrivalDate) {
+  if (materialSource === '客供料' && !arrivalDate) {
     showMessage(
       '請選擇來料日期',
       'error'
     );
+    return;
+  }
+
+  if (materialSource === '自購料' && !washDate) {
+    showMessage('請選擇領料日期', 'error');
+    document.getElementById('washDate').focus();
     return;
   }
 
@@ -2194,23 +2217,6 @@ async function submitBatch(event) {
     return;
   }
 
-  if (
-    materialSource === '自購料' &&
-    !supplier
-  ) {
-    showMessage(
-      '自購料請輸入供料方 / 廠商',
-      'error'
-    );
-
-    document
-      .getElementById(
-        'supplier'
-      )
-      .focus();
-
-    return;
-  }
 
   if (
     !Number.isFinite(weight) ||
@@ -2225,6 +2231,7 @@ async function submitBatch(event) {
 
   if (
     returnDate &&
+    arrivalDate &&
     returnDate < arrivalDate
   ) {
     showMessage(
@@ -3457,7 +3464,7 @@ function renderFinishedBatchInfo(
           ${formatDecimal(batch.arrivalWeight, 4)} kg
         </div>
         <div>
-          <strong>清洗日期：</strong>
+          <strong>${batch.materialSource === '自購料' ? '領料日期' : '清洗日期'}：</strong>
           ${escapeHtml(batch.washDate || '-')}
         </div>
       `;
