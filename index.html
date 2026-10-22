@@ -1128,7 +1128,7 @@
       </button>
 
       <div class="complete-batch-hint">
-        僅在確認本批材料已全部加工完成時使用。完成後批次將進入「待結算」。
+        有填寫本次數據時會回報並結案；全部數據留白時僅結案，不新增回報紀錄。完成後進入「待結算」。
       </div>
     </form>
 
@@ -3719,6 +3719,12 @@ async function submitFinishedReport(
       .value
       .trim();
 
+  // 正式版：有本次數據時「回報＋結案」；三個數據欄皆空時只結案。
+  const weightRaw = document.getElementById('finishedTotalWeight').value.trim();
+  const unitRaw = document.getElementById('finishedUnitWeight').value.trim();
+  const qtyRaw = document.getElementById('finishedDirectQty').value.trim();
+  const completionOnly = completeBatch && !weightRaw && !unitRaw && !qtyRaw;
+
   if (!reportDate) {
     showFinishedMessage(
       '請選擇日期',
@@ -3727,7 +3733,7 @@ async function submitFinishedReport(
     return;
   }
 
-  if (getFinishedMode_() === '重量' && (
+  if (!completionOnly && getFinishedMode_() === '重量' && (
     !Number.isFinite(totalWeight) ||
     totalWeight <= 0
   )) {
@@ -3738,7 +3744,7 @@ async function submitFinishedReport(
     return;
   }
 
-  if (getFinishedMode_() === '重量' && (
+  if (!completionOnly && getFinishedMode_() === '重量' && (
     !Number.isFinite(unitWeight) ||
     unitWeight <= 0
   )) {
@@ -3750,7 +3756,7 @@ async function submitFinishedReport(
   }
 
   // 數量回報：重量為選填；同時填寫時只提醒，不覆寫 pcs。
-  if (getFinishedMode_() === '數量') {
+  if (!completionOnly && getFinishedMode_() === '數量') {
     const q = Number(document.getElementById('finishedDirectQty').value);
     const wRaw = document.getElementById('finishedTotalWeight').value.trim();
     const uRaw = document.getElementById('finishedUnitWeight').value.trim();
@@ -3792,7 +3798,7 @@ async function submitFinishedReport(
     const result =
       await apiPost({
         action:
-          'createFinishedReport',
+          completionOnly ? 'completeFinishedBatchOnly' : 'createFinishedReport',
         userId:
           currentUserId,
         batchId:
@@ -3828,9 +3834,11 @@ async function submitFinishedReport(
         : '';
 
     showFinishedMessage(
-      result.duplicate
-        ? `第 ${result.reportNo} 次回報已存在，未重複寫入${completedText}`
-        : `第 ${result.reportNo} 次成品回報成功，換算 ${Number(result.quantity || 0).toLocaleString('zh-TW')} pcs${completedText}`,
+      completionOnly
+        ? (result.message || '批次完成成功，未新增成品回報紀錄')
+        : result.duplicate
+          ? `第 ${result.reportNo} 次回報已存在，未重複寫入${completedText}`
+          : `第 ${result.reportNo} 次成品回報成功，換算 ${Number(result.quantity || 0).toLocaleString('zh-TW')} pcs${completedText}`,
       'success'
     );
 
