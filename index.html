@@ -1034,6 +1034,7 @@
     <form
       id="finishedReportForm"
       autocomplete="off"
+      style="display:none;"
     >
       <div class="form-group">
         <label for="finishedReportDate">
@@ -3407,6 +3408,8 @@ function updateFinishedCalculatedQty() {
 
 
 async function loadFinishedReportContext() {
+  const formEl = document.getElementById('finishedReportForm');
+  formEl.style.display = 'none';
   if (!currentFinishedBatchId) {
     showFinishedMessage(
       'QR Code 缺少批次 ID',
@@ -3443,11 +3446,6 @@ async function loadFinishedReportContext() {
       result.summary
     );
 
-    const formEl =
-      document.getElementById(
-        'finishedReportForm'
-      );
-
     const historyTitle =
       document.querySelector(
         '.history-title'
@@ -3459,7 +3457,8 @@ async function loadFinishedReportContext() {
       );
 
     // 已完成批次禁止新增回報，但仍顯示逐筆歷史紀錄供查詢。
-    const isCompleted = result.batchCompleted === true;
+    const isReturned = String(result.batch.status || '').trim() === '退料結案';
+    const isCompleted = isReturned || result.batchCompleted === true;
     formEl.style.display = isCompleted ? 'none' : 'block';
 
     if (historyTitle) {
@@ -3472,7 +3471,13 @@ async function loadFinishedReportContext() {
 
     renderFinishedHistory(result.reports || []);
 
-    if (isCompleted) {
+    const returnRecords = Array.isArray(result.returnClosureRecords) ? result.returnClosureRecords : [];
+    if (isReturned && returnRecords.length) {
+      showFinishedMessage('此批次已因退料結案（僅供查詢）', 'success');
+      renderFinishedReturnClosure_(returnRecords);
+    } else if (isReturned) {
+      showFinishedMessage('此批次已結案（僅供查詢）；目前無法取得退料結案明細。', 'success');
+    } else if (isCompleted) {
       showFinishedMessage(
         '✅ 此批次已完成，以下為最終成品回報總計及逐筆紀錄（僅供查詢）。',
         'success'
@@ -3488,6 +3493,24 @@ async function loadFinishedReportContext() {
       'error'
     );
   }
+}
+
+
+function renderFinishedReturnClosure_(records) {
+  document.getElementById('finishedBatchInfo').insertAdjacentHTML('beforeend', `
+    <div><strong>結案方式：</strong>退料</div>
+    <ol>
+      ${records.map(function(record) {
+        const weight = record.weightKg;
+        const reason = String(record.reason == null ? '' : record.reason);
+        return `<li>
+          <div><strong>退料日期：</strong>${escapeHtml(record.date || '未登錄')}</div>
+          <div><strong>退料重量（原始來料重量）：</strong>${weight == null || weight === '' ? '未登錄' : escapeHtml(weight) + ' kg'}</div>
+          <div><strong>退料原因：</strong><div style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(reason.trim() ? reason : '未填寫退料原因')}</div></div>
+        </li>`;
+      }).join('')}
+    </ol>
+  `);
 }
 
 
