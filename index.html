@@ -988,6 +988,29 @@
       </div>
     </section>
 
+    <details class="return-section">
+      <summary>管理員驗證</summary>
+      <form id="batchAdminForm" class="return-content">
+        <label for="batchAdminPin">日報管理員 PIN</label>
+        <input id="batchAdminPin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="current-password" required>
+        <button type="submit">驗證</button>
+      </form>
+      <div id="batchVoidControls" class="return-content" hidden>
+        <form id="batchVoidSearch">
+          <label for="batchVoidId">查詢批次 ID</label>
+          <input id="batchVoidId" class="return-batch-input" autocomplete="off" required>
+          <button type="submit" class="return-search-btn">查詢批次</button>
+        </form>
+        <p id="batchVoidInfo"></p>
+        <form id="batchVoidForm" hidden>
+          <label for="batchVoidReason">作廢原因</label>
+          <textarea id="batchVoidReason" rows="2" maxlength="300" required></textarea>
+          <button type="submit" class="return-search-btn">作廢批次</button>
+        </form>
+      </div>
+      <p id="batchVoidStatus" class="return-content" role="status" aria-live="polite"></p>
+    </details>
+
   </div>
 </div>
 
@@ -2710,6 +2733,105 @@ async function startReturnBatch_(prefill){
   }catch(e){box.textContent='查詢失敗：'+e.message;}
 }
 
+const batchVoidStatus = document.getElementById('batchVoidStatus');
+const batchVoidForm = document.getElementById('batchVoidForm');
+const batchVoidControls = document.getElementById('batchVoidControls');
+let batchVoidToken = '';
+let selectedVoidBatch = null;
+
+document.getElementById('batchAdminForm').onsubmit = async function(event) {
+  event.preventDefault();
+  const pin = document.getElementById('batchAdminPin');
+  const credentials = JSON.stringify({action: 'lightLogin', pin: pin.value.trim()});
+  pin.value = '';
+  this.querySelector('button').disabled = true;
+  batchVoidControls.hidden = true;
+  batchVoidForm.hidden = true;
+  batchVoidToken = '';
+  selectedVoidBatch = null;
+  document.getElementById('batchVoidInfo').textContent = '';
+  batchVoidStatus.textContent = '正在驗證管理員…';
+  try {
+    const response = await fetch(
+      'https://script.google.com/macros/s/AKfycbwqDY8e31iuKrchHkJUjicPK57UytKRz6DdztQ7-2fGiVNsEYpfiHMaYlQ1YdHBKREA8Q/exec',
+      {method: 'POST', body: credentials});
+    if (!response.ok) throw new Error('日報驗證服務暫時無法使用');
+    const login = await response.json();
+    if (!login.success || login.isAdmin !== true) throw new Error(login.message || '需要管理員權限');
+    const access = await apiPost({action: 'checkBatchVoidAdmin', loginToken: login.loginToken});
+    if (!access.success) throw new Error(access.message);
+    batchVoidToken = login.loginToken;
+    batchVoidControls.hidden = false;
+    batchVoidStatus.textContent = '';
+    document.getElementById('batchVoidId').focus();
+  } catch (error) {
+    batchVoidStatus.textContent = error.message;
+  } finally {
+    this.querySelector('button').disabled = false;
+  }
+};
+
+document.getElementById('batchVoidSearch').onsubmit = async function(event) {
+  event.preventDefault();
+  const button = this.querySelector('button');
+  button.disabled = true;
+  batchVoidForm.hidden = true;
+  selectedVoidBatch = null;
+  const info = document.getElementById('batchVoidInfo');
+  info.textContent = '';
+  batchVoidStatus.textContent = '正在查詢批次…';
+  try {
+    const result = await apiPost({action: 'getBatchVoidCandidate', loginToken: batchVoidToken,
+      batchId: document.getElementById('batchVoidId').value.trim()});
+    if (!result.success) throw new Error(result.message);
+    const batch = result.batch;
+    const quantity = batch.inputQuantity === '' ? '數量未登錄' : batch.inputQuantity + ' pcs';
+    info.textContent = `批次 ${batch.batchId}｜件號 ${batch.partNo}｜${quantity}｜${batch.arrivalWeight} kg｜${batch.status}`;
+    selectedVoidBatch = batch;
+    batchVoidForm.reset();
+    batchVoidForm.hidden = batch.status !== '待加工';
+    batchVoidStatus.textContent = batchVoidForm.hidden ? '此批次狀態不可直接作廢。' : '';
+  } catch (error) {
+    batchVoidStatus.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+};
+
+batchVoidForm.onsubmit = async function(event) {
+  event.preventDefault();
+  const batch = selectedVoidBatch;
+  const reason = document.getElementById('batchVoidReason').value.trim();
+  if (!batch || !reason) {
+    batchVoidStatus.textContent = '請選擇批次並填寫作廢原因。';
+    return;
+  }
+  if (!confirm(`確定作廢批次 ${batch.batchId}（${batch.partNo}）？作廢後即停止使用。`)) return;
+  const button = this.querySelector('button');
+  button.disabled = true;
+  const searchButton = document.querySelector('#batchVoidSearch button');
+  searchButton.disabled = true;
+  const authButton = document.querySelector('#batchAdminForm button');
+  authButton.disabled = true;
+  batchVoidStatus.textContent = '正在檢查關聯紀錄…';
+  try {
+    const result = await apiPost({action: 'voidBatch', batchId: batch.batchId, reason, loginToken: batchVoidToken});
+    if (!result.success) throw new Error(result.message);
+    batchVoidStatus.textContent = `批次 ${batch.batchId} 已作廢。`;
+    document.getElementById('batchVoidInfo').textContent = '';
+    selectedVoidBatch = null;
+    this.reset();
+    this.hidden = true;
+    loadTodayBatches();
+  } catch (error) {
+    batchVoidStatus.textContent = error.message;
+  } finally {
+    button.disabled = false;
+    searchButton.disabled = false;
+    authButton.disabled = false;
+  }
+};
+
 async function loadTodayBatches() {
   const container =
     document.getElementById(
@@ -3480,7 +3602,7 @@ async function loadFinishedReportContext() {
       showFinishedMessage('此批次已結案（僅供查詢）；目前無法取得退料結案明細。', 'success');
     } else if (isCompleted) {
       showFinishedMessage(
-        '✅ 此批次已完成，以下為最終成品回報總計及逐筆紀錄（僅供查詢）。',
+        result.batch.status === '已作廢' ? '此批次已作廢，僅供查詢。' : '✅ 此批次已完成，以下為最終成品回報總計及逐筆紀錄（僅供查詢）。',
         'success'
       );
     }
